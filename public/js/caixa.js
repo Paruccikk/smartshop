@@ -1,4 +1,4 @@
-// caixa.js (atualizado — toasts + proteções para SK210)
+// caixa.js (atualizado — substitui alert/confirm por toasts e confirm modal custom)
 // usa módulos ESM (type="module" no HTML)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -41,118 +41,192 @@ let carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount;
 let subtotalModal, totalVendaModal;
 let btnFinalizarVendaMobile, btnCancelarVendaMobile;
 
-/* =========================
-   TOASTS (notificações)
-   ========================= */
-function createToastContainer() {
-  let container = document.querySelector('.toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.className = 'toast-container';
-    // estilos mínimos inline quando o CSS não for inserido
-    // (recomendo adicionar o CSS no arquivo caixa.css conforme instruído anteriormente)
-    document.body.appendChild(container);
+/* ------------------------
+   TOAST (notificações)
+   ------------------------ */
+function ensureToastContainer() {
+  let c = document.querySelector('.toast-container');
+  if (!c) {
+    c = document.createElement('div');
+    c.className = 'toast-container';
+    c.style.position = 'fixed';
+    c.style.right = '20px';
+    c.style.bottom = '24px';
+    c.style.display = 'flex';
+    c.style.flexDirection = 'column';
+    c.style.gap = '8px';
+    c.style.zIndex = '9999';
+    c.style.pointerEvents = 'none'; // container shouldn't block clicks
+    document.body.appendChild(c);
   }
-  return container;
+  return c;
 }
 
-/**
- * showToast(message, options)
- * options: { type: 'success'|'warning'|'error'|'info', duration: number(ms) }
- */
 function showToast(message, options = {}) {
-  const { type = 'success', duration = 1600 } = options;
-  const container = createToastContainer();
-
+  const { type = 'success', duration = 1800 } = options;
+  const container = ensureToastContainer();
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
 
-  const iconMap = {
-    success: '✔',
-    warning: '⚠',
-    error: '✖',
-    info: 'ℹ'
-  };
-  const icon = iconMap[type] || '';
+  // basic content
+  const iconMap = { success: '✔', warning: '⚠', error: '✖', info: 'ℹ' };
+  toast.innerHTML = `<span class="toast-icon" aria-hidden="true">${iconMap[type] || ''}</span><div class="toast-text">${message}</div>`;
 
-  toast.innerHTML = `<span class="toast-icon">${icon}</span><div class="toast-msg">${message}</div>`;
-
-  // small inline baseline styles if user forgot to include CSS for toasts
-  // (if caixa.css already contains toast styles, esses estilos não atrapalham)
+  // minimal inline styles so it works out-of-the-box
   toast.style.pointerEvents = 'auto';
-  toast.style.padding = '10px 14px';
-  toast.style.borderRadius = '10px';
-  toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
-  toast.style.background = '#fff';
   toast.style.display = 'flex';
   toast.style.alignItems = 'center';
   toast.style.gap = '10px';
+  toast.style.padding = '10px 14px';
+  toast.style.borderRadius = '10px';
+  toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+  toast.style.background = '#ffffff';
   toast.style.fontWeight = '600';
   toast.style.maxWidth = '420px';
-  toast.style.marginTop = '8px';
   toast.style.cursor = 'pointer';
+  toast.style.transition = 'transform 220ms ease, opacity 220ms ease';
+  toast.style.transform = 'translateY(12px)';
+  toast.style.opacity = '0';
+
   // icon style
   const iconEl = toast.querySelector('.toast-icon');
   if (iconEl) {
-    iconEl.style.width = '36px';
-    iconEl.style.height = '36px';
-    iconEl.style.borderRadius = '8px';
+    iconEl.style.width = '34px';
+    iconEl.style.height = '34px';
     iconEl.style.display = 'flex';
     iconEl.style.alignItems = 'center';
     iconEl.style.justifyContent = 'center';
+    iconEl.style.borderRadius = '8px';
     iconEl.style.color = '#fff';
     iconEl.style.fontWeight = '700';
     iconEl.style.fontSize = '14px';
-    iconEl.style.background = (type === 'success' ? '#2a9d8f' : type === 'warning' ? '#f4a261' : type === 'error' ? '#e63946' : '#4361ee');
+    iconEl.style.background = type === 'success' ? '#2a9d8f' : type === 'warning' ? '#f4a261' : type === 'error' ? '#e63946' : '#4361ee';
   }
 
-  // ensure container exists in DOM and is positioned
-  const cont = createToastContainer();
-  cont.style.position = 'fixed';
-  cont.style.right = '20px';
-  cont.style.bottom = '24px';
-  cont.style.display = 'flex';
-  cont.style.flexDirection = 'column';
-  cont.style.gap = '8px';
-  cont.style.zIndex = '6000';
-  cont.appendChild(toast);
-
-  // animação de entrada
-  toast.style.transform = 'translateY(12px)';
-  toast.style.opacity = '0';
-  toast.style.transition = 'transform 240ms cubic-bezier(.2,.9,.3,1), opacity 240ms';
+  container.appendChild(toast);
+  // entrance
   requestAnimationFrame(() => {
     toast.style.transform = 'translateY(0)';
     toast.style.opacity = '1';
   });
 
-  const timeoutId = setTimeout(() => {
-    // saída
+  // auto remove
+  const id = setTimeout(() => {
     toast.style.transform = 'translateY(12px)';
     toast.style.opacity = '0';
     setTimeout(() => {
-      try { cont.removeChild(toast); } catch (e) {}
-      if (cont.children.length === 0) {
-        try { document.body.removeChild(cont); } catch (e) {}
-      }
-    }, 260);
+      try { container.removeChild(toast); } catch (e) {}
+    }, 240);
   }, duration);
 
+  // click removes early
   toast.addEventListener('click', () => {
-    clearTimeout(timeoutId);
+    clearTimeout(id);
     toast.style.transform = 'translateY(12px)';
     toast.style.opacity = '0';
     setTimeout(() => {
-      try { cont.removeChild(toast); } catch (e) {}
-      if (cont.children.length === 0) {
-        try { document.body.removeChild(cont); } catch (e) {}
-      }
+      try { container.removeChild(toast); } catch (e) {}
     }, 200);
   });
 
   return toast;
+}
+
+/* ------------------------
+   CONFIRM MODAL (custom)
+   retorna Promise<boolean>
+   ------------------------ */
+function showConfirm(message, options = {}) {
+  const { title = 'Confirmação', confirmText = 'OK', cancelText = 'Cancelar' } = options;
+
+  return new Promise((resolve) => {
+    // criar backdrop/modal
+    const backdrop = document.createElement('div');
+    backdrop.className = 'confirm-backdrop';
+    backdrop.setAttribute('role', 'dialog');
+    backdrop.setAttribute('aria-modal', 'true');
+    backdrop.style.position = 'fixed';
+    backdrop.style.left = 0;
+    backdrop.style.top = 0;
+    backdrop.style.right = 0;
+    backdrop.style.bottom = 0;
+    backdrop.style.zIndex = 10000;
+    backdrop.style.display = 'flex';
+    backdrop.style.alignItems = 'center';
+    backdrop.style.justifyContent = 'center';
+    backdrop.style.background = 'rgba(0,0,0,0.55)';
+
+    const box = document.createElement('div');
+    box.className = 'confirm-box';
+    box.style.background = '#fff';
+    box.style.padding = '18px';
+    box.style.borderRadius = '12px';
+    box.style.maxWidth = '420px';
+    box.style.width = '92%';
+    box.style.boxShadow = '0 20px 60px rgba(0,0,0,0.25)';
+    box.style.textAlign = 'center';
+    box.style.pointerEvents = 'auto';
+
+    const h = document.createElement('div');
+    h.style.fontWeight = '700';
+    h.style.marginBottom = '8px';
+    h.style.color = '#212529';
+    h.textContent = title;
+
+    const p = document.createElement('div');
+    p.style.marginBottom = '18px';
+    p.style.color = '#495057';
+    p.textContent = message;
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.justifyContent = 'center';
+    actions.style.gap = '12px';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.textContent = cancelText;
+    btnCancel.style.padding = '10px 14px';
+    btnCancel.style.borderRadius = '8px';
+    btnCancel.style.background = '#f1f3f5';
+    btnCancel.style.border = 'none';
+    btnCancel.style.cursor = 'pointer';
+
+    const btnOk = document.createElement('button');
+    btnOk.textContent = confirmText;
+    btnOk.style.padding = '10px 14px';
+    btnOk.style.borderRadius = '8px';
+    btnOk.style.background = '#2a9d8f';
+    btnOk.style.border = 'none';
+    btnOk.style.color = 'white';
+    btnOk.style.cursor = 'pointer';
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnOk);
+    box.appendChild(h);
+    box.appendChild(p);
+    box.appendChild(actions);
+    backdrop.appendChild(box);
+    document.body.appendChild(backdrop);
+
+    function cleanup(result) {
+      try { document.body.removeChild(backdrop); } catch (e) {}
+      resolve(result);
+    }
+
+    btnCancel.addEventListener('click', () => cleanup(false));
+    btnOk.addEventListener('click', () => cleanup(true));
+
+    // teclado: ESC cancela
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        cleanup(false);
+        document.removeEventListener('keydown', onKey);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+  });
 }
 
 /* =========================
@@ -231,7 +305,6 @@ function inicializarElementosDOM() {
         }
       }, { passive: true });
     } catch (err) {
-      // caso plataforma não permita alterar readOnly/tabIndex, ignorar
       console.warn('Não foi possível aplicar readOnly ao campo visível', err);
     }
   }
@@ -250,22 +323,26 @@ function configurarEventListeners() {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value.trim();
       const senha = document.getElementById('loginPassword').value;
-      if (!email || !senha) { mostrarErro('Preencha todos os campos'); return; }
+      if (!email || !senha) { showToast('Preencha todos os campos', { type: 'warning' }); return; }
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, senha);
         console.log('Login ok', userCredential.user.email);
       } catch (err) {
         console.error('erro login', err);
-        mostrarErro(getFriendlyError(err.code));
+        showToast(getFriendlyError(err.code), { type: 'error', duration: 3000 });
       }
     });
   }
 
-  // logout
+  // logout -> usa showConfirm
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
-      if (carrinho.length > 0 && !confirm('Há uma venda em andamento. Tem certeza que deseja sair?')) return;
-      try { await signOut(auth); } catch (err) { console.error(err); showToast('Erro ao sair. Tente novamente', { type: 'error' }); }
+      if (carrinho.length > 0) {
+        const ok = await showConfirm('Há uma venda em andamento. Tem certeza que deseja sair?', { title: 'Sair' });
+        if (!ok) return;
+      }
+      try { await signOut(auth); showToast('Você saiu do sistema', { type: 'info' }); }
+      catch (err) { console.error(err); showToast('Erro ao sair. Tente novamente', { type: 'error' }); }
     });
   }
 
@@ -283,18 +360,19 @@ function configurarEventListeners() {
   // voltar do modal
   if (btnVoltar) btnVoltar.addEventListener('click', () => { if (modalFinalizar) modalFinalizar.style.display = 'none'; });
 
-  // cancelar venda (desktop)
+  // cancelar venda (desktop) -> usa showConfirm
   if (btnCancelarVenda) {
-    btnCancelarVenda.addEventListener('click', () => {
+    btnCancelarVenda.addEventListener('click', async () => {
       if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
-      if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
-        carrinho = [];
-        atualizarCarrinho();
-        if (scannerInputElement) {
-          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-        }
-        fecharCarrinhoMobile();
+      const ok = await showConfirm('Deseja cancelar a venda e limpar o carrinho?', { title: 'Cancelar venda', confirmText: 'Sim, cancelar', cancelText: 'Não' });
+      if (!ok) return;
+      carrinho = [];
+      atualizarCarrinho();
+      if (scannerInputElement) {
+        try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
       }
+      fecharCarrinhoMobile();
+      showToast('Venda cancelada', { type: 'info' });
     });
   }
 
@@ -325,7 +403,7 @@ function configurarEventListeners() {
     }
   });
 
-  // beforeunload
+  // beforeunload: mantém aviso nativo ao tentar fechar/atualizar página
   window.addEventListener('beforeunload', (e) => {
     if (carrinho.length > 0) {
       e.preventDefault();
@@ -356,13 +434,13 @@ onAuthStateChanged(auth, async (user) => {
         mostrarCaixa();
       } else {
         await signOut(auth);
-        mostrarErro('Conta pendente de aprovação administrativa');
+        showToast('Conta pendente de aprovação administrativa', { type: 'warning', duration: 3000 });
         mostrarLogin();
       }
     } catch (err) {
       console.error(err);
       await signOut(auth);
-      mostrarErro('Erro ao verificar conta. Tente novamente.');
+      showToast('Erro ao verificar conta. Tente novamente.', { type: 'error', duration: 3000 });
       mostrarLogin();
     }
   } else {
@@ -383,7 +461,6 @@ function mostrarLogin() {
   if (caixaContent) caixaContent.style.display = 'none';
   const le = document.getElementById('loginEmail');
   if (le) le.focus();
-  esconderErro();
 }
 
 function mostrarCaixa() {
@@ -393,9 +470,6 @@ function mostrarCaixa() {
   if (userName) userName.textContent = usuarioLogado.nome || usuarioLogado.email;
   carregarProdutos();
 }
-
-function mostrarErro(m) { if (errorText) errorText.textContent = m; if (loginError) loginError.style.display = 'flex'; }
-function esconderErro() { if (loginError) loginError.style.display = 'none'; }
 
 function getFriendlyError(code) {
   const errors = {
@@ -623,7 +697,6 @@ function abrirModalFinalizacao() {
   });
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   totalModal.textContent = `R$ ${total.toFixed(2)}`;
-  // sincroniza com select desktop se houver
   const selectDesktop = document.getElementById('formaPagamento');
   if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarSelecaoPagamento();
@@ -826,16 +899,17 @@ function inicializarCarrinhoMobile() {
     });
   }
   if (btnCancelarVendaMobile) {
-    btnCancelarVendaMobile.addEventListener('click', () => {
+    btnCancelarVendaMobile.addEventListener('click', async () => {
       if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
-      if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
-        carrinho = [];
-        atualizarCarrinho();
-        fecharCarrinhoMobile();
-        if (scannerInputElement) {
-          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-        }
+      const ok = await showConfirm('Deseja cancelar a venda e limpar o carrinho?', { title: 'Cancelar venda', confirmText: 'Sim, cancelar', cancelText: 'Não' });
+      if (!ok) return;
+      carrinho = [];
+      atualizarCarrinho();
+      fecharCarrinhoMobile();
+      if (scannerInputElement) {
+        try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
       }
+      showToast('Venda cancelada', { type: 'info' });
     });
   }
 
@@ -917,3 +991,4 @@ document.addEventListener('DOMContentLoaded', () => {
   window.removerDoCarrinho = removerDoCarrinho;
   window.abrirModalFinalizacao = abrirModalFinalizacao;
 });
+
