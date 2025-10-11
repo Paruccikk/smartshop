@@ -86,13 +86,16 @@
           <div class="search-box">
             <i class="fas fa-search"></i>
             <input 
-            type="text" 
-            id="campoBusca" 
-            placeholder="Escaneie o código ou digite o nome do produto"
-            autofocus
-            autocomplete="off"
-            style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px;">
+              type="text" 
+              id="campoBusca" 
+              placeholder="Escaneie o código ou digite o nome do produto"
+              autofocus
+              autocomplete="off"
+              style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px;">
+          </div> <!-- fecha a div.search-box -->
+
           <div id="resultados"></div>
+        </div> <!-- fecha a div.search-container -->
 
 
         <div class="produtos-grid" id="produtosGrid">
@@ -218,6 +221,20 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const campoBusca = document.getElementById('campoBusca');
+
+    // Mantém o foco sempre ativo
+    function manterFoco() {
+      if (document.activeElement !== campoBusca) campoBusca.focus();
+    }
+
+    setInterval(manterFoco, 500); // verifica duas vezes por segundo
+  });
+</script>
+
 
   <script type="module" src="js/caixa.js"></script>
 </body>

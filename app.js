@@ -32,6 +32,9 @@ app.get('/menu.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'menu.html'));
 });
 
+const pinpadRoutes = require('./routes/pinpad');
+app.use('/api/pinpad', pinpadRoutes);
+
 
 // 🧪 TESTE: listar todas as rotas registradas
 function listarRotas(app) {

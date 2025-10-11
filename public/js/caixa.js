@@ -580,48 +580,62 @@ async function confirmarVenda() {
   const total = carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
 
   try {
-    const vendaData = {
-      data: new Date().toISOString(),
-      itens: carrinho,
-      total: total,
-      formaPagamento: formaPagamentoSelecionada,
-      status: 'finalizada',
-      vendedor: usuarioLogado.nome || usuarioLogado.email,
-      vendedorId: usuarioLogado.uid
-    };
+    // 1️⃣ Envia o valor para o terminal de pagamento
+    const response = await fetch('/api/pinpad/pagar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        valor: total,
+        formaPagamento: formaPagamentoSelecionada
+      })
+    });
 
-    const novaVendaRef = push(ref(db, `lojas/${lojaId}/vendas`));
-    await set(novaVendaRef, vendaData);
+    const resultado = await response.json();
 
-    // Atualizar estoque
-    for (const item of carrinho) {
-      const produtoRef = ref(db, `lojas/${lojaId}/produtos/${item.id}`);
-      const produtoSnap = await get(produtoRef);
-      
-      if (produtoSnap.exists()) {
-        const produto = produtoSnap.val();
-        const novaQuantidade = (produto.quantidade || 0) - item.quantidade;
-        
-        await update(produtoRef, {
-          quantidade: Math.max(0, novaQuantidade)
-        });
+    // 2️⃣ Verifica retorno do terminal
+    if (resultado.status === 'aprovado') {
+      // Pagamento aprovado — registrar venda
+      const vendaData = {
+        data: new Date().toISOString(),
+        itens: carrinho,
+        total,
+        formaPagamento: formaPagamentoSelecionada,
+        status: 'concluída',
+        vendedor: usuarioLogado.nome || usuarioLogado.email,
+        vendedorId: usuarioLogado.uid
+      };
+
+      const novaVendaRef = push(ref(db, `lojas/${lojaId}/vendas`));
+      await set(novaVendaRef, vendaData);
+
+      // Atualizar estoque
+      for (const item of carrinho) {
+        const produtoRef = ref(db, `lojas/${lojaId}/produtos/${item.id}`);
+        const produtoSnap = await get(produtoRef);
+        if (produtoSnap.exists()) {
+          const produto = produtoSnap.val();
+          const novaQuantidade = (produto.quantidade || 0) - item.quantidade;
+          await update(produtoRef, { quantidade: Math.max(0, novaQuantidade) });
+        }
       }
+
+      alert('💳 Pagamento aprovado! Venda concluída com sucesso!');
+      carrinho = [];
+      atualizarCarrinho();
+      modalFinalizar.style.display = 'none';
+      await carregarProdutos();
+      document.getElementById('searchProduto').focus();
+    } 
+    else {
+      alert(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`);
     }
 
-    alert('Venda realizada com sucesso!');
-    
-    carrinho = [];
-    atualizarCarrinho();
-    if (modalFinalizar) modalFinalizar.style.display = 'none';
-
-    await carregarProdutos();
-    document.getElementById('searchProduto').focus();
-
   } catch (error) {
-    console.error('Erro ao finalizar venda:', error);
-    alert('Erro ao finalizar venda. Tente novamente.');
+    console.error('Erro ao processar pagamento:', error);
+    alert('Erro ao processar pagamento. Verifique a maquininha.');
   }
 }
+
 
 // --- LEITURA AUTOMÁTICA DE CÓDIGO DE BARRAS OU NOME ---
 document.addEventListener('DOMContentLoaded', function () {
