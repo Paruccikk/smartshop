@@ -86,14 +86,14 @@
           <div class="search-box">
             <i class="fas fa-search"></i>
             <input 
-              type="text" 
-              id="searchProduto" 
-              placeholder="Buscar produto por nome ou código de barras..."
-              onkeyup="filtrarProdutos()"
-              autofocus
-            />
-          </div>
-        </div>
+            type="text" 
+            id="campoBusca" 
+            placeholder="Escaneie o código ou digite o nome do produto"
+            autofocus
+            autocomplete="off"
+            style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px;">
+          <div id="resultados"></div>
+
 
         <div class="produtos-grid" id="produtosGrid">
           <!-- Produtos serão carregados aqui -->

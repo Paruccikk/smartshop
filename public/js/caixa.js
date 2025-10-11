@@ -62,6 +62,7 @@ function inicializarElementosDOM() {
   configurarEventListeners();
 }
 
+
 // Configurar todos os event listeners
 function configurarEventListeners() {
   // Login
@@ -622,9 +623,44 @@ async function confirmarVenda() {
   }
 }
 
-// Inicializar quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', function() {
+// --- LEITURA AUTOMÁTICA DE CÓDIGO DE BARRAS OU NOME ---
+document.addEventListener('DOMContentLoaded', function () {
   inicializarElementosDOM();
+
+  const inputBusca = document.getElementById('searchProduto');
+  if (!inputBusca) return;
+
+  // Foco automático no campo de busca
+  inputBusca.focus();
+
+  // Ao pressionar ENTER, buscar o produto
+  inputBusca.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const termo = inputBusca.value.trim().toLowerCase();
+      if (!termo) return;
+
+      // Buscar por código de barras ou nome
+      const produtoEncontrado = produtos.find(p =>
+        (p.codigoBarras && p.codigoBarras.toLowerCase() === termo) ||
+        p.nome.toLowerCase() === termo
+      );
+
+      if (produtoEncontrado) {
+        if (produtoEncontrado.quantidade > 0) {
+          adicionarAoCarrinho(produtoEncontrado);
+          inputBusca.value = ''; // limpa campo após leitura
+        } else {
+          alert('Produto sem estoque!');
+        }
+      } else {
+        alert('Produto não encontrado!');
+      }
+
+      // Mantém o foco no campo para próximas leituras
+      setTimeout(() => inputBusca.focus(), 100);
+    }
+  });
 });
 
 // Exportar funções para o escopo global
