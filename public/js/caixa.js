@@ -979,6 +979,96 @@ function atualizarBotaoCarrinhoFlutuante(totalItens, total) {
   if (carrinhoTotalMobile) carrinhoTotalMobile.textContent = `R$ ${total.toFixed(2)}`;
 }
 
+/* =============================
+   AUTO-REFRESH POR INATIVIDADE
+   ============================= */
+
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+const CHECK_INTERVAL_MS = 60 * 1000; // checar a cada 1 minuto
+let _lastActivity = Date.now();
+let _inactivityChecker = null;
+
+// registra atividade do usuário para resetar o timer
+function _resetInactivityTimer() {
+  _lastActivity = Date.now();
+}
+
+// eventos que consideramos "atividade"
+const _activityEvents = ['mousemove','mousedown','touchstart','keydown','wheel','scroll','click','focus'];
+
+// adiciona listeners (passive para touch/scroll)
+_activityEvents.forEach(ev => {
+  document.addEventListener(ev, _resetInactivityTimer, { passive: true });
+});
+
+// função que diz se está aberto algum modal que não devemos interromper
+function _isModalOpenOrUserBusy() {
+  const modalOpen =
+    (typeof modalLogin !== 'undefined' && modalLogin && modalLogin.style.display === 'flex') ||
+    (typeof modalFinalizar !== 'undefined' && modalFinalizar && modalFinalizar.style.display === 'flex') ||
+    (typeof modalCarrinho !== 'undefined' && modalCarrinho && modalCarrinho.style.display === 'flex');
+
+  const vendaEmAndamento = (typeof carrinho !== 'undefined' && Array.isArray(carrinho) && carrinho.length > 0);
+
+  return modalOpen || vendaEmAndamento;
+}
+
+// tenta um "soft refresh" (recarregar somente os produtos/promos)
+// caso carregarProdutos não exista ou lance erro, faz reload completo
+async function _attemptSoftRefreshThenReloadIfNeeded() {
+  try {
+    if (typeof carregarProdutos === 'function') {
+      await carregarProdutos(); // atualiza produtos/promos
+      // se após 5s ainda estiver inativo, faz reload completo (garante que mudanças de configuração também apareçam)
+      setTimeout(() => {
+        if ((Date.now() - _lastActivity) >= 5000 && !_isModalOpenOrUserBusy()) {
+          console.log('Inatividade detectada: recarregando página (após soft refresh).');
+          location.reload();
+        } else {
+          // usuário voltou ou está ocupado — adia reload
+          _lastActivity = Date.now();
+        }
+      }, 5000);
+    } else {
+      // fallback: reload direto
+      location.reload();
+    }
+  } catch (err) {
+    console.warn('Soft refresh falhou — recarregando página:', err);
+    location.reload();
+  }
+}
+
+// inicia o watcher de inatividade
+function startInactivityWatcher() {
+  if (_inactivityChecker) clearInterval(_inactivityChecker);
+  _inactivityChecker = setInterval(() => {
+    const idle = Date.now() - _lastActivity;
+
+    if (idle >= INACTIVITY_TIMEOUT) {
+      // só recarrega se ninguém estiver com venda e sem modais abertos
+      if (_isModalOpenOrUserBusy()) {
+        // adia: considera que o usuário pode estar em uma operação crítica
+        console.log('Inatividade detectada, mas usuário está ocupado — adiando reload.');
+        _lastActivity = Date.now(); // adia o reload
+        return;
+      }
+
+      console.log('Inatividade detectada -> tentando atualizar automaticamente.');
+      // tentar primeiro atualizar produtos/promo (soft), depois recarregar se necessário
+      _attemptSoftRefreshThenReloadIfNeeded();
+      // e atualiza lastActivity pra não entrar em loop imediato
+      _lastActivity = Date.now();
+    }
+  }, CHECK_INTERVAL_MS);
+}
+
+// expor controles (opcional) para debug manual
+window.__startInactivityWatcher = startInactivityWatcher;
+window.__resetInactivityTimer = _resetInactivityTimer;
+
+// iniciar automaticamente (caso já estejamos com DOM pronto)
+
 /* =========================
    Inicialização final
    ========================= */
@@ -990,5 +1080,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.alterarQuantidade = alterarQuantidade;
   window.removerDoCarrinho = removerDoCarrinho;
   window.abrirModalFinalizacao = abrirModalFinalizacao;
+  // reinicia contador ao carregar a página
+  _lastActivity = Date.now();
+  startInactivityWatcher();
 });
 
