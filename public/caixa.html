@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Smart Shop</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/caixa.css" />
@@ -288,6 +288,20 @@
       </div>
     </div>
   </div>
+
+  <script>
+// Tentar entrar em modo tela cheia
+function enterFullscreen() {
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+    }
+}
+
+// Executar quando a página carregar
+window.addEventListener('load', enterFullscreen);
+</script>
 
   <!-- carregamento do módulo principal (caixa.js) -->
   <script type="module" src="js/caixa.js"></script>

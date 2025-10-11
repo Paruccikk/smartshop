@@ -1,4 +1,4 @@
-// caixa.js (versão revisada, com proteções e correções)
+// caixa.js (atualizado para evitar abrir teclado virtual na SK210)
 // usa módulos ESM (type="module" no HTML)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -38,7 +38,7 @@ let campoBuscaElement, scannerInputElement;
 // Carrinho mobile
 let modalCarrinho, btnAbrirCarrinho, btnFecharCarrinho, carrinhoModalItems;
 let carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount;
-let subtotalModal, totalVendaModal, formaPagamentoMobile;
+let subtotalModal, totalVendaModal;
 let btnFinalizarVendaMobile, btnCancelarVendaMobile;
 
 // Inicializa todos os elementos do DOM (única função)
@@ -88,6 +88,30 @@ function inicializarElementosDOM() {
   btnFinalizarVendaMobile = document.getElementById('btnFinalizarVendaMobile');
   btnCancelarVendaMobile = document.getElementById('btnCancelarVendaMobile');
 
+  // PROTEÇÕES PARA NÃO ABRIR TECLADO: torna o campo visível readonly + redireciona foco para scanner hidden
+  if (campoBuscaElement) {
+    try {
+      campoBuscaElement.readOnly = true; // evita digitação direta
+      campoBuscaElement.tabIndex = -1;   // remove do fluxo de tab
+      // impedir foco direto e redirecionar ao scanner oculto
+      campoBuscaElement.addEventListener('focus', (e) => {
+        e.preventDefault();
+        if (scannerInputElement) scannerInputElement.focus();
+      }, { passive: true });
+      campoBuscaElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (scannerInputElement) scannerInputElement.focus();
+      }, { passive: true });
+      campoBuscaElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (scannerInputElement) scannerInputElement.focus();
+      }, { passive: true });
+    } catch (err) {
+      // caso alguma plataforma não permita alterar readOnly/tabIndex, ignorar
+      console.warn('Não foi possível aplicar readOnly ao campo visível', err);
+    }
+  }
+
   configurarEventListeners();
   inicializarCarrinhoMobile(); // se presente
 }
@@ -123,7 +147,6 @@ function configurarEventListeners() {
   if (btnFinalizarVenda) {
     btnFinalizarVenda.addEventListener('click', () => {
       if (carrinho.length === 0) { alert('Adicione produtos ao carrinho antes de finalizar a venda!'); return; }
-      // chamar função (tornada disponível em window também)
       abrirModalFinalizacao();
     });
   }
@@ -141,7 +164,7 @@ function configurarEventListeners() {
       if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
         carrinho = [];
         atualizarCarrinho();
-        if (campoBuscaElement) campoBuscaElement.focus();
+        if (scannerInputElement) scannerInputElement.focus();
         fecharCarrinhoMobile();
       }
     });
@@ -162,7 +185,6 @@ function configurarEventListeners() {
     if (e.target === modalFinalizar) {
       modalFinalizar.style.display = 'none';
     }
-    // modalCarrinho também
     if (modalCarrinho && e.target === modalCarrinho) {
       fecharCarrinhoMobile();
     }
@@ -184,20 +206,7 @@ function configurarEventListeners() {
     }
   });
 
-  // busca manual por Enter (campo visível)
-  if (campoBuscaElement) {
-    campoBuscaElement.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const termo = (campoBuscaElement.value || '').trim();
-        if (termo) {
-          buscarPorTermoOuAdicionar(termo);
-          campoBuscaElement.value = '';
-          setTimeout(() => campoBuscaElement.focus(), 100);
-        }
-      }
-    });
-  }
+  // NOTA: removemos listener de keydown no campo visível para evitar que inputs convencionais abram o teclado.
 }
 
 // auth state
@@ -389,7 +398,10 @@ function adicionarAoCarrinho(produto) {
     });
   }
   atualizarCarrinho();
-  if (campoBuscaElement) campoBuscaElement.focus();
+  // NÃO focar no campo visível — focar no input scanner escondido para evitar teclado
+  if (scannerInputElement) {
+    try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+  }
 }
 
 function removerDoCarrinho(produtoId) {
@@ -463,7 +475,10 @@ function abrirModalFinalizacao() {
   });
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   totalModal.textContent = `R$ ${total.toFixed(2)}`;
-  formaPagamentoSelecionada = 'pix';
+  // mantém a seleção em PIX por padrão
+  // se quiser sincronizar com select visível (desktop), ler o value do select e atualizar formaPagamentoSelecionada
+  const selectDesktop = document.getElementById('formaPagamento');
+  if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarSelecaoPagamento();
   atualizarInstrucaoPagamento(total);
   modalFinalizar.style.display = 'flex';
@@ -525,7 +540,9 @@ async function confirmarVenda() {
       atualizarCarrinho();
       if (modalFinalizar) modalFinalizar.style.display = 'none';
       await carregarProdutos();
-      if (campoBuscaElement) campoBuscaElement.focus();
+      if (scannerInputElement) {
+        try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+      }
     } else {
       alert(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`);
     }
@@ -562,7 +579,7 @@ function ativarLeitorSemTeclado() {
   async function processarBuffer(termoRaw) {
     const termo = (termoRaw || '').trim();
     if (!termo) return;
-    if (campoBuscaVisivel) campoBuscaVisivel.value = termo;
+    if (campoBuscaVisivel) campoBuscaVisivel.value = termo; // só UX, campo é readonly
     buscarPorTermoOuAdicionar(termo);
     buffer = '';
     scannerInput.value = '';
@@ -571,9 +588,8 @@ function ativarLeitorSemTeclado() {
 
   // fallback global - captura antes de outros handlers
   window.addEventListener('keydown', (e) => {
-    // garante que e.key existe
     if (!e || typeof e.key !== 'string') return;
-    if (e.key.length > 1 && e.key !== 'Enter') return; // teclas como Shift, Alt...
+    if (e.key.length > 1 && e.key !== 'Enter') return;
     const agora = Date.now();
     if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
     ultimoTempo = agora;
@@ -587,7 +603,6 @@ function ativarLeitorSemTeclado() {
 
     if (e.key.length === 1) buffer += e.key;
 
-    // timeout fallback para scanners que não enviam Enter
     if (scannerInput && typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
     scannerInput._timeoutProcess = setTimeout(() => {
       if (buffer.length > 0) processarBuffer(buffer);
@@ -635,14 +650,13 @@ function buscarPorTermoOuAdicionar(termo) {
     else alert('Produto sem estoque!');
   } else {
     console.warn('Produto não encontrado:', termo);
-    // opcional: mostrar mensagem visual ao invés de alert
+    // opcional: mostrar mensagem UI em vez de alert
   }
 }
 
 // ************** Carrinho Mobile (flutuante/modal) *****************
 function inicializarCarrinhoMobile() {
   if (!btnAbrirCarrinho || !modalCarrinho) {
-    // pode ser página desktop; apenas inicializa o que existir
     return;
   }
 
@@ -663,7 +677,7 @@ function inicializarCarrinhoMobile() {
         carrinho = [];
         atualizarCarrinho();
         fecharCarrinhoMobile();
-        if (campoBuscaElement) campoBuscaElement.focus();
+        if (scannerInputElement) scannerInputElement.focus();
       }
     });
   }

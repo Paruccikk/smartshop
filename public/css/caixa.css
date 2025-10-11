@@ -324,3 +324,15 @@ body{
 
 /* Utility para ocultar painel desktop quando for mobile */
 .carrinho-desktop{display:block}
+
+/* Tentar esconder qualquer elemento de UI do browser */
+header, nav, .browser-ui, .address-bar {
+    display: none !important;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
