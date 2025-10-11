@@ -637,45 +637,140 @@ async function confirmarVenda() {
 }
 
 
-// --- LEITURA AUTOMÁTICA DE CÓDIGO DE BARRAS OU NOME ---
-document.addEventListener('DOMContentLoaded', function () {
-  inicializarElementosDOM();
+// ------- CAPTURA DO LEITOR (HID) SEM MOSTRAR TECLADO VIRTUAL -------
+// Deve ser carregado/ativado após inicializar elementos DOM (inicializarElementosDOM)
 
-  const inputBusca = document.getElementById('searchProduto');
-  if (!inputBusca) return;
+function ativarLeitorSemTeclado() {
+  const scannerInput = document.getElementById('scannerInput');
+  const campoBuscaVisivel = document.getElementById('campoBusca');
 
-  // Foco automático no campo de busca
-  inputBusca.focus();
+  if (!scannerInput) {
+    console.warn('scannerInput não encontrado. Adicione o input escondido no HTML.');
+    return;
+  }
 
-  // Ao pressionar ENTER, buscar o produto
-  inputBusca.addEventListener('keydown', function (e) {
+  // Tenta focar no input escondido — inputmode="none" evita keyboard na maioria dos casos
+  function garantirFoco() {
+    try {
+      scannerInput.focus({ preventScroll: true });
+    } catch (err) {
+      // fallback
+      scannerInput.focus();
+    }
+  }
+
+  garantirFoco();
+  // refoca periodicamente caso o foco seja perdido
+  const focoInterval = setInterval(() => {
+    if (document.activeElement !== scannerInput) garantirFoco();
+  }, 700); // ajustável
+
+  // Buffer para juntar caracteres do scanner
+  let buffer = '';
+  let ultimoTempo = 0;
+  const MAX_IDLE = 40; // ms entre caracteres; scanners enviam caracteres muito rápidos (10-30ms)
+  
+  // Função para processar o conteúdo lido
+  async function processarBuffer(termoRaw) {
+    const termo = termoRaw.trim();
+    if (!termo) return;
+    // opcional: exibir no campo visível (só para UX)
+    if (campoBuscaVisivel) campoBuscaVisivel.value = termo;
+
+    // Aqui chamamos sua lógica: buscar por código ou por nome e adicionar ao carrinho
+    buscarPorTermoOuAdicionar(termo);
+
+    // limpa buffer e garante foco novamente
+    buffer = '';
+    scannerInput.value = '';
+    setTimeout(() => garantirFoco(), 100);
+  }
+
+  // Captura global de teclas (fallback caso input escondido não receba)
+  window.addEventListener('keydown', (e) => {
+    // ignora teclas modificadoras
+    if (e.key.length > 1 && e.key !== 'Enter') return;
+
+    const agora = Date.now();
+
+    // se passou muito tempo desde o último caractere, reinicia buffer
+    if (ultimoTempo && (agora - ultimoTempo) > 200) {
+      buffer = '';
+    }
+
+    ultimoTempo = agora;
+
     if (e.key === 'Enter') {
       e.preventDefault();
-      const termo = inputBusca.value.trim().toLowerCase();
-      if (!termo) return;
-
-      // Buscar por código de barras ou nome
-      const produtoEncontrado = produtos.find(p =>
-        (p.codigoBarras && p.codigoBarras.toLowerCase() === termo) ||
-        p.nome.toLowerCase() === termo
-      );
-
-      if (produtoEncontrado) {
-        if (produtoEncontrado.quantidade > 0) {
-          adicionarAoCarrinho(produtoEncontrado);
-          inputBusca.value = ''; // limpa campo após leitura
-        } else {
-          alert('Produto sem estoque!');
-        }
-      } else {
-        alert('Produto não encontrado!');
-      }
-
-      // Mantém o foco no campo para próximas leituras
-      setTimeout(() => inputBusca.focus(), 100);
+      // processa o que estiver no buffer
+      if (buffer.length > 0) processarBuffer(buffer);
+      buffer = '';
+      return;
     }
+
+    // anexa caractere
+    buffer += e.key;
+    // se não usar Enter (alguns leitores não enviam Enter), podemos usar timeout para processar
+    // aqui um timeout que processa 120ms após último caractere
+    clearTimeout(scannerInput._timeoutProcess);
+    scannerInput._timeoutProcess = setTimeout(() => {
+      if (buffer.length > 0) processarBuffer(buffer);
+    }, 120);
+  }, true); // use capture para pegar antes de outros handlers
+
+  // E também no próprio input escondido (mais confiável quando ele recebe focus)
+  scannerInput.addEventListener('keydown', (e) => {
+    const agora = Date.now();
+    if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
+    ultimoTempo = agora;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (buffer.length > 0) processarBuffer(buffer);
+      buffer = '';
+      return;
+    }
+
+    // ignora teclas não-printáveis
+    if (e.key.length === 1) buffer += e.key;
+
+    clearTimeout(scannerInput._timeoutProcess);
+    scannerInput._timeoutProcess = setTimeout(() => {
+      if (buffer.length > 0) processarBuffer(buffer);
+    }, 120);
   });
+}
+
+// Função utilitária: busca produto por código/nome e adiciona ao carrinho se encontrado
+function buscarPorTermoOuAdicionar(termo) {
+  const termoLower = termo.toLowerCase();
+
+  // tenta achar por código exato (muito comum)
+  let produtoEncontrado = produtos.find(p => p.codigoBarras && p.codigoBarras.toLowerCase() === termoLower);
+
+  // se não achou por código, tenta por nome (partial)
+  if (!produtoEncontrado) {
+    produtoEncontrado = produtos.find(p => p.nome && p.nome.toLowerCase().includes(termoLower));
+  }
+
+  if (produtoEncontrado) {
+    if (produtoEncontrado.quantidade > 0) {
+      adicionarAoCarrinho(produtoEncontrado);
+    } else {
+      alert('Produto sem estoque!');
+    }
+  } else {
+    // opcional: mostrar mensagem visual em vez de alert
+    console.warn('Produto não encontrado:', termo);
+    //alert(`Produto não encontrado: ${termo}`);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarElementosDOM();
+  ativarLeitorSemTeclado();
 });
+
 
 // Exportar funções para o escopo global
 window.alterarQuantidade = alterarQuantidade;

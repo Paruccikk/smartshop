@@ -92,11 +92,22 @@
               autofocus
               autocomplete="off"
               style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px;">
-          </div> <!-- fecha a div.search-box -->
+          </div> <!-- fecha div.search-box -->
+
+          <!-- INPUT ESCONDIDO PARA SCANNER -->
+          <input
+            id="scannerInput"
+            type="text"
+            inputmode="none"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0;"
+          />
 
           <div id="resultados"></div>
-        </div> <!-- fecha a div.search-container -->
-
+        </div> <!-- fecha div.search-container -->
 
         <div class="produtos-grid" id="produtosGrid">
           <!-- Produtos serão carregados aqui -->
@@ -145,96 +156,131 @@
   </div>
 
   <!-- Modal de Finalização -->
-<div id="modalFinalizar" class="modal">
-  <div class="modal-content finalizar-content">
-    <h2><i class="fas fa-check-circle"></i> Finalizar Compra</h2>
-    
-    <div class="resumo-venda">
-      <h3>Resumo da Compra</h3>
-      <div id="resumoItens"></div>
-      <div class="total-final-modal">
-        <strong>Total: <span id="totalModal">R$ 0,00</span></strong>
-      </div>
-    </div>
-
-    <div class="selecao-pagamento">
-      <h3>Selecione a Forma de Pagamento</h3>
-      <div class="opcoes-pagamento">
-        <div class="opcao-pagamento" data-pagamento="pix">
-          <div class="icone-pagamento">
-            <i class="fas fa-qrcode"></i>
-          </div>
-          <div class="info-pagamento">
-            <span class="titulo-pagamento">PIX</span>
-            <span class="descricao-pagamento">Pagamento instantâneo</span>
-          </div>
-          <div class="check-pagamento">
-            <i class="fas fa-check"></i>
-          </div>
-        </div>
-
-        <div class="opcao-pagamento" data-pagamento="debito">
-          <div class="icone-pagamento">
-            <i class="fas fa-credit-card"></i>
-          </div>
-          <div class="info-pagamento">
-            <span class="titulo-pagamento">Cartão de Débito</span>
-            <span class="descricao-pagamento">Passe na maquininha</span>
-          </div>
-          <div class="check-pagamento">
-            <i class="fas fa-check"></i>
-          </div>
-        </div>
-
-        <div class="opcao-pagamento" data-pagamento="credito">
-          <div class="icone-pagamento">
-            <i class="fas fa-credit-card"></i>
-          </div>
-          <div class="info-pagamento">
-            <span class="titulo-pagamento">Cartão de Crédito</span>
-            <span class="descricao-pagamento">Passe na maquininha</span>
-          </div>
-          <div class="check-pagamento">
-            <i class="fas fa-check"></i>
-          </div>
+  <div id="modalFinalizar" class="modal">
+    <div class="modal-content finalizar-content">
+      <h2><i class="fas fa-check-circle"></i> Finalizar Compra</h2>
+      
+      <div class="resumo-venda">
+        <h3>Resumo da Compra</h3>
+        <div id="resumoItens"></div>
+        <div class="total-final-modal">
+          <strong>Total: <span id="totalModal">R$ 0,00</span></strong>
         </div>
       </div>
-    </div>
 
-    <div class="instrucao-pagamento-final" id="instrucaoPagamentoFinal">
-      <div class="instrucao-content">
-        <i class="fas fa-qrcode"></i>
-        <div class="instrucao-texto">
-          <strong>Valor para pagamento:</strong>
-          <span class="valor-pagamento" id="valorPagamentoFinal">R$ 0,00</span>
+      <div class="selecao-pagamento">
+        <h3>Selecione a Forma de Pagamento</h3>
+        <div class="opcoes-pagamento">
+          <div class="opcao-pagamento" data-pagamento="pix">
+            <div class="icone-pagamento">
+              <i class="fas fa-qrcode"></i>
+            </div>
+            <div class="info-pagamento">
+              <span class="titulo-pagamento">PIX</span>
+              <span class="descricao-pagamento">Pagamento instantâneo</span>
+            </div>
+            <div class="check-pagamento">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
+
+          <div class="opcao-pagamento" data-pagamento="debito">
+            <div class="icone-pagamento">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="info-pagamento">
+              <span class="titulo-pagamento">Cartão de Débito</span>
+              <span class="descricao-pagamento">Passe na maquininha</span>
+            </div>
+            <div class="check-pagamento">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
+
+          <div class="opcao-pagamento" data-pagamento="credito">
+            <div class="icone-pagamento">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="info-pagamento">
+              <span class="titulo-pagamento">Cartão de Crédito</span>
+              <span class="descricao-pagamento">Passe na maquininha</span>
+            </div>
+            <div class="check-pagamento">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="modal-actions">
-      <button class="btn-secondary" id="btnVoltar">
-        <i class="fas fa-arrow-left"></i> Voltar
-      </button>
-      <button class="btn-primary" id="btnConfirmarVenda">
-        <i class="fas fa-check"></i> Confirmar Compra
-      </button>
+      <div class="instrucao-pagamento-final" id="instrucaoPagamentoFinal">
+        <div class="instrucao-content">
+          <i class="fas fa-qrcode"></i>
+          <div class="instrucao-texto">
+            <strong>Valor para pagamento:</strong>
+            <span class="valor-pagamento" id="valorPagamentoFinal">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btnVoltar">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <button class="btn-primary" id="btnConfirmarVenda">
+          <i class="fas fa-check"></i> Confirmar Compra
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const campoBusca = document.getElementById('campoBusca');
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const campoBusca = document.getElementById('campoBusca');
+      const scannerInput = document.getElementById('scannerInput');
 
-    // Mantém o foco sempre ativo
-    function manterFoco() {
-      if (document.activeElement !== campoBusca) campoBusca.focus();
-    }
+      // Mantém o foco no input escondido para capturar scanner
+      function manterFocoScanner() {
+        if (document.activeElement !== scannerInput) scannerInput.focus();
+      }
+      setInterval(manterFocoScanner, 500); // refoca a cada 0,5s
 
-    setInterval(manterFoco, 500); // verifica duas vezes por segundo
-  });
-</script>
+      // Buffer para capturar leitura rápida do scanner
+      let buffer = '';
+      let ultimoTempo = 0;
 
+      function processarBuffer(termo) {
+        termo = termo.trim();
+        if (!termo) return;
+        // opcional: exibe no campo visível
+        campoBusca.value = termo;
+        // chamar função de busca e adicionar ao carrinho
+        buscarPorTermoOuAdicionar(termo);
+        buffer = '';
+        scannerInput.value = '';
+        setTimeout(() => scannerInput.focus(), 100);
+      }
+
+      scannerInput.addEventListener('keydown', (e) => {
+        const agora = Date.now();
+        if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
+        ultimoTempo = agora;
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (buffer.length > 0) processarBuffer(buffer);
+          buffer = '';
+          return;
+        }
+
+        if (e.key.length === 1) buffer += e.key;
+
+        clearTimeout(scannerInput._timeoutProcess);
+        scannerInput._timeoutProcess = setTimeout(() => {
+          if (buffer.length > 0) processarBuffer(buffer);
+        }, 120);
+      });
+    });
+  </script>
 
   <script type="module" src="js/caixa.js"></script>
 </body>
