@@ -1,9 +1,21 @@
-// caixa.js (atualizado — substitui alert/confirm por toasts e confirm modal custom)
-// usa módulos ESM (type="module" no HTML)
-
+// caixa.js - atualizado: listeners em tempo real para atualizar apenas os produtos
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, push, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  get,
+  push,
+  set,
+  update,
+  onValue,
+  off
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -41,197 +53,11 @@ let carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount;
 let subtotalModal, totalVendaModal;
 let btnFinalizarVendaMobile, btnCancelarVendaMobile;
 
-/* ------------------------
-   TOAST (notificações)
-   ------------------------ */
-function ensureToastContainer() {
-  let c = document.querySelector('.toast-container');
-  if (!c) {
-    c = document.createElement('div');
-    c.className = 'toast-container';
-    c.style.position = 'fixed';
-    c.style.right = '20px';
-    c.style.bottom = '24px';
-    c.style.display = 'flex';
-    c.style.flexDirection = 'column';
-    c.style.gap = '8px';
-    c.style.zIndex = '9999';
-    c.style.pointerEvents = 'none'; // container shouldn't block clicks
-    document.body.appendChild(c);
-  }
-  return c;
-}
+// Variáveis para gerenciar listeners do realtime DB
+let produtosListenerUnsub = null;
+let promocoesListenerUnsub = null;
 
-function showToast(message, options = {}) {
-  const { type = 'success', duration = 1800 } = options;
-  const container = ensureToastContainer();
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
-
-  // basic content
-  const iconMap = { success: '✔', warning: '⚠', error: '✖', info: 'ℹ' };
-  toast.innerHTML = `<span class="toast-icon" aria-hidden="true">${iconMap[type] || ''}</span><div class="toast-text">${message}</div>`;
-
-  // minimal inline styles so it works out-of-the-box
-  toast.style.pointerEvents = 'auto';
-  toast.style.display = 'flex';
-  toast.style.alignItems = 'center';
-  toast.style.gap = '10px';
-  toast.style.padding = '10px 14px';
-  toast.style.borderRadius = '10px';
-  toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
-  toast.style.background = '#ffffff';
-  toast.style.fontWeight = '600';
-  toast.style.maxWidth = '420px';
-  toast.style.cursor = 'pointer';
-  toast.style.transition = 'transform 220ms ease, opacity 220ms ease';
-  toast.style.transform = 'translateY(12px)';
-  toast.style.opacity = '0';
-
-  // icon style
-  const iconEl = toast.querySelector('.toast-icon');
-  if (iconEl) {
-    iconEl.style.width = '34px';
-    iconEl.style.height = '34px';
-    iconEl.style.display = 'flex';
-    iconEl.style.alignItems = 'center';
-    iconEl.style.justifyContent = 'center';
-    iconEl.style.borderRadius = '8px';
-    iconEl.style.color = '#fff';
-    iconEl.style.fontWeight = '700';
-    iconEl.style.fontSize = '14px';
-    iconEl.style.background = type === 'success' ? '#2a9d8f' : type === 'warning' ? '#f4a261' : type === 'error' ? '#e63946' : '#4361ee';
-  }
-
-  container.appendChild(toast);
-  // entrance
-  requestAnimationFrame(() => {
-    toast.style.transform = 'translateY(0)';
-    toast.style.opacity = '1';
-  });
-
-  // auto remove
-  const id = setTimeout(() => {
-    toast.style.transform = 'translateY(12px)';
-    toast.style.opacity = '0';
-    setTimeout(() => {
-      try { container.removeChild(toast); } catch (e) {}
-    }, 240);
-  }, duration);
-
-  // click removes early
-  toast.addEventListener('click', () => {
-    clearTimeout(id);
-    toast.style.transform = 'translateY(12px)';
-    toast.style.opacity = '0';
-    setTimeout(() => {
-      try { container.removeChild(toast); } catch (e) {}
-    }, 200);
-  });
-
-  return toast;
-}
-
-/* ------------------------
-   CONFIRM MODAL (custom)
-   retorna Promise<boolean>
-   ------------------------ */
-function showConfirm(message, options = {}) {
-  const { title = 'Confirmação', confirmText = 'OK', cancelText = 'Cancelar' } = options;
-
-  return new Promise((resolve) => {
-    // criar backdrop/modal
-    const backdrop = document.createElement('div');
-    backdrop.className = 'confirm-backdrop';
-    backdrop.setAttribute('role', 'dialog');
-    backdrop.setAttribute('aria-modal', 'true');
-    backdrop.style.position = 'fixed';
-    backdrop.style.left = 0;
-    backdrop.style.top = 0;
-    backdrop.style.right = 0;
-    backdrop.style.bottom = 0;
-    backdrop.style.zIndex = 10000;
-    backdrop.style.display = 'flex';
-    backdrop.style.alignItems = 'center';
-    backdrop.style.justifyContent = 'center';
-    backdrop.style.background = 'rgba(0,0,0,0.55)';
-
-    const box = document.createElement('div');
-    box.className = 'confirm-box';
-    box.style.background = '#fff';
-    box.style.padding = '18px';
-    box.style.borderRadius = '12px';
-    box.style.maxWidth = '420px';
-    box.style.width = '92%';
-    box.style.boxShadow = '0 20px 60px rgba(0,0,0,0.25)';
-    box.style.textAlign = 'center';
-    box.style.pointerEvents = 'auto';
-
-    const h = document.createElement('div');
-    h.style.fontWeight = '700';
-    h.style.marginBottom = '8px';
-    h.style.color = '#212529';
-    h.textContent = title;
-
-    const p = document.createElement('div');
-    p.style.marginBottom = '18px';
-    p.style.color = '#495057';
-    p.textContent = message;
-
-    const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.justifyContent = 'center';
-    actions.style.gap = '12px';
-
-    const btnCancel = document.createElement('button');
-    btnCancel.textContent = cancelText;
-    btnCancel.style.padding = '10px 14px';
-    btnCancel.style.borderRadius = '8px';
-    btnCancel.style.background = '#f1f3f5';
-    btnCancel.style.border = 'none';
-    btnCancel.style.cursor = 'pointer';
-
-    const btnOk = document.createElement('button');
-    btnOk.textContent = confirmText;
-    btnOk.style.padding = '10px 14px';
-    btnOk.style.borderRadius = '8px';
-    btnOk.style.background = '#2a9d8f';
-    btnOk.style.border = 'none';
-    btnOk.style.color = 'white';
-    btnOk.style.cursor = 'pointer';
-
-    actions.appendChild(btnCancel);
-    actions.appendChild(btnOk);
-    box.appendChild(h);
-    box.appendChild(p);
-    box.appendChild(actions);
-    backdrop.appendChild(box);
-    document.body.appendChild(backdrop);
-
-    function cleanup(result) {
-      try { document.body.removeChild(backdrop); } catch (e) {}
-      resolve(result);
-    }
-
-    btnCancel.addEventListener('click', () => cleanup(false));
-    btnOk.addEventListener('click', () => cleanup(true));
-
-    // teclado: ESC cancela
-    function onKey(e) {
-      if (e.key === 'Escape') {
-        cleanup(false);
-        document.removeEventListener('keydown', onKey);
-      }
-    }
-    document.addEventListener('keydown', onKey);
-  });
-}
-
-/* =========================
-   Inicializar elementos DOM
-   ========================= */
+// Inicializa todos os elementos do DOM (única função)
 function inicializarElementosDOM() {
   // modais e áreas principais
   modalLogin = document.getElementById('modalLogin');
@@ -262,7 +88,7 @@ function inicializarElementosDOM() {
   btnCancelarVenda = document.getElementById('btnCancelarVenda');
 
   // campo busca e scanner escondido
-  campoBuscaElement = document.getElementById('campoBusca'); // seu HTML usa campoBusca
+  campoBuscaElement = document.getElementById('campoBusca');
   scannerInputElement = document.getElementById('scannerInput');
 
   // carrinho mobile
@@ -283,26 +109,20 @@ function inicializarElementosDOM() {
     try {
       campoBuscaElement.readOnly = true; // evita digitação direta
       campoBuscaElement.tabIndex = -1;   // remove do fluxo de tab
-      // prevenir foco direto e redirecionar ao scanner oculto
+
       campoBuscaElement.addEventListener('focus', (e) => {
         e.preventDefault();
-        if (scannerInputElement) {
-          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-        }
+        if (scannerInputElement) scannerInputElement.focus();
       }, { passive: true });
 
       campoBuscaElement.addEventListener('click', (e) => {
         e.preventDefault();
-        if (scannerInputElement) {
-          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-        }
+        if (scannerInputElement) scannerInputElement.focus();
       }, { passive: true });
 
       campoBuscaElement.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        if (scannerInputElement) {
-          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-        }
+        if (scannerInputElement) scannerInputElement.focus();
       }, { passive: true });
     } catch (err) {
       console.warn('Não foi possível aplicar readOnly ao campo visível', err);
@@ -313,9 +133,7 @@ function inicializarElementosDOM() {
   inicializarCarrinhoMobile(); // se presente
 }
 
-/* =========================
-   configurar Event Listeners
-   ========================= */
+// Event listeners (único lugar)
 function configurarEventListeners() {
   // login
   if (loginForm) {
@@ -323,33 +141,31 @@ function configurarEventListeners() {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value.trim();
       const senha = document.getElementById('loginPassword').value;
-      if (!email || !senha) { showToast('Preencha todos os campos', { type: 'warning' }); return; }
+      if (!email || !senha) { mostrarErro('Preencha todos os campos'); return; }
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, senha);
         console.log('Login ok', userCredential.user.email);
       } catch (err) {
         console.error('erro login', err);
-        showToast(getFriendlyError(err.code), { type: 'error', duration: 3000 });
+        mostrarErro(getFriendlyError(err.code));
       }
     });
   }
 
-  // logout -> usa showConfirm
+  // logout
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
-      if (carrinho.length > 0) {
-        const ok = await showConfirm('Há uma venda em andamento. Tem certeza que deseja sair?', { title: 'Sair' });
-        if (!ok) return;
-      }
-      try { await signOut(auth); showToast('Você saiu do sistema', { type: 'info' }); }
-      catch (err) { console.error(err); showToast('Erro ao sair. Tente novamente', { type: 'error' }); }
+      if (carrinho.length > 0 && !confirmDialog('Há uma venda em andamento. Tem certeza que deseja sair?')) return;
+      try {
+        await signOut(auth);
+      } catch (err) { console.error(err); alertDialog('Erro ao sair.'); }
     });
   }
 
   // finalizar (desktop)
   if (btnFinalizarVenda) {
     btnFinalizarVenda.addEventListener('click', () => {
-      if (carrinho.length === 0) { showToast('Adicione produtos ao carrinho antes de finalizar a venda!', { type: 'warning' }); return; }
+      if (carrinho.length === 0) { toast('Adicione produtos ao carrinho antes de finalizar a venda!'); return; }
       abrirModalFinalizacao();
     });
   }
@@ -360,19 +176,17 @@ function configurarEventListeners() {
   // voltar do modal
   if (btnVoltar) btnVoltar.addEventListener('click', () => { if (modalFinalizar) modalFinalizar.style.display = 'none'; });
 
-  // cancelar venda (desktop) -> usa showConfirm
+  // cancelar venda (desktop)
   if (btnCancelarVenda) {
-    btnCancelarVenda.addEventListener('click', async () => {
-      if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
-      const ok = await showConfirm('Deseja cancelar a venda e limpar o carrinho?', { title: 'Cancelar venda', confirmText: 'Sim, cancelar', cancelText: 'Não' });
-      if (!ok) return;
-      carrinho = [];
-      atualizarCarrinho();
-      if (scannerInputElement) {
-        try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-      }
-      fecharCarrinhoMobile();
-      showToast('Venda cancelada', { type: 'info' });
+    btnCancelarVenda.addEventListener('click', () => {
+      if (carrinho.length === 0) { toast('Não há itens no carrinho para cancelar!'); return; }
+      confirmDialog('Deseja cancelar a venda e limpar o carrinho?').then(yes => {
+        if (!yes) return;
+        carrinho = [];
+        atualizarCarrinho();
+        if (scannerInputElement) scannerInputElement.focus();
+        fecharCarrinhoMobile();
+      });
     });
   }
 
@@ -403,7 +217,7 @@ function configurarEventListeners() {
     }
   });
 
-  // beforeunload: mantém aviso nativo ao tentar fechar/atualizar página
+  // beforeunload
   window.addEventListener('beforeunload', (e) => {
     if (carrinho.length > 0) {
       e.preventDefault();
@@ -415,9 +229,7 @@ function configurarEventListeners() {
   // NOTA: removemos listener de keydown no campo visível para evitar que inputs convencionais abram o teclado.
 }
 
-/* =========================
-   Auth state
-   ========================= */
+// auth state
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
@@ -434,16 +246,18 @@ onAuthStateChanged(auth, async (user) => {
         mostrarCaixa();
       } else {
         await signOut(auth);
-        showToast('Conta pendente de aprovação administrativa', { type: 'warning', duration: 3000 });
+        mostrarErro('Conta pendente de aprovação administrativa');
         mostrarLogin();
       }
     } catch (err) {
       console.error(err);
       await signOut(auth);
-      showToast('Erro ao verificar conta. Tente novamente.', { type: 'error', duration: 3000 });
+      mostrarErro('Erro ao verificar conta. Tente novamente.');
       mostrarLogin();
     }
   } else {
+    // remove listeners se existirem
+    removerRealtimeListeners();
     mostrarLogin();
   }
 });
@@ -461,6 +275,7 @@ function mostrarLogin() {
   if (caixaContent) caixaContent.style.display = 'none';
   const le = document.getElementById('loginEmail');
   if (le) le.focus();
+  esconderErro();
 }
 
 function mostrarCaixa() {
@@ -468,8 +283,14 @@ function mostrarCaixa() {
   if (caixaContent) caixaContent.style.display = 'flex';
   if (lojaNome) lojaNome.textContent = usuarioLogado.lojaNome || 'Minha Loja';
   if (userName) userName.textContent = usuarioLogado.nome || usuarioLogado.email;
-  carregarProdutos();
+
+  // Carrega inicialmente e configura listeners em tempo real
+  carregarProdutos(); // carrega uma vez inicial
+  configurarRealtimeUpdates(); // faz updates em tempo real (produtos + promoções)
 }
+
+function mostrarErro(m) { if (errorText) errorText.textContent = m; if (loginError) loginError.style.display = 'flex'; }
+function esconderErro() { if (loginError) loginError.style.display = 'none'; }
 
 function getFriendlyError(code) {
   const errors = {
@@ -484,9 +305,26 @@ function getFriendlyError(code) {
   return errors[code] || 'Erro ao fazer login. Tente novamente.';
 }
 
-/* =========================
-   Promoções & Produtos
-   ========================= */
+// Função auxiliar: atualiza a lista de produtos local e exibe (mesmo formato que carregarProdutos fazia)
+function atualizarProdutosLocais(produtosObj, promocoesAtivas = []) {
+  if (!produtosObj) produtos = [];
+  else {
+    produtos = Object.entries(produtosObj).map(([id, prod]) => {
+      const promocaoAtiva = promocoesAtivas.find(p => p.produtoId === id);
+      return {
+        id,
+        ...prod,
+        quantidade: prod.quantidade || 0,
+        valor: prod.valor || 0,
+        precoPromocional: promocaoAtiva ? promocaoAtiva.precoPromocional : null,
+        temPromocao: !!promocaoAtiva
+      };
+    });
+  }
+  exibirProdutos(produtos);
+}
+
+// promocoes - retorna array das promoções ativas para esta loja
 async function verificarPromocoesAtivas() {
   try {
     const promSnap = await get(ref(db, 'promocoes'));
@@ -507,6 +345,7 @@ async function verificarPromocoesAtivas() {
   }
 }
 
+// carregar produtos (uma vez)
 async function carregarProdutos() {
   try {
     const produtosSnap = await get(ref(db, `lojas/${lojaId}/produtos`));
@@ -519,21 +358,10 @@ async function carregarProdutos() {
       return;
     }
     const data = produtosSnap.val();
-    produtos = Object.entries(data).map(([id, prod]) => {
-      const promocaoAtiva = prom.find(p => p.produtoId === id);
-      return {
-        id,
-        ...prod,
-        quantidade: prod.quantidade || 0,
-        valor: prod.valor || 0,
-        precoPromocional: promocaoAtiva ? promocaoAtiva.precoPromocional : null,
-        temPromocao: !!promocaoAtiva
-      };
-    });
-    exibirProdutos(produtos);
+    atualizarProdutosLocais(data, prom);
   } catch (err) {
     console.error('Erro carregar produtos', err);
-    showToast('Erro ao carregar produtos da loja.', { type: 'error' });
+    alertDialog('Erro ao carregar produtos da loja.');
   }
 }
 
@@ -570,9 +398,7 @@ function exibirProdutos(produtosLista) {
   });
 }
 
-/* =========================
-   Filtrar produtos
-   ========================= */
+// filtrar (campo visível apenas para UX, mas readonly)
 window.filtrarProdutos = function() {
   const termoRaw = (campoBuscaElement ? campoBuscaElement.value : '') || '';
   const termo = termoRaw.toLowerCase().trim();
@@ -585,23 +411,15 @@ window.filtrarProdutos = function() {
   exibirProdutos(produtosFiltrados);
 };
 
-/* =========================
-   Carrinho
-   ========================= */
+// carrinho
 function adicionarAoCarrinho(produto) {
   const precoFinal = produto.temPromocao ? produto.precoPromocional : produto.valor;
   const itemExistente = carrinho.find(item => item.id === produto.id);
   if (itemExistente) {
-    if (itemExistente.quantidade >= produto.quantidade) {
-      showToast('Quantidade em estoque insuficiente!', { type: 'warning' });
-      return;
-    }
+    if (itemExistente.quantidade >= produto.quantidade) { toast('Quantidade em estoque insuficiente!'); return; }
     itemExistente.quantidade++;
   } else {
-    if (produto.quantidade < 1) {
-      showToast('Produto sem estoque!', { type: 'warning' });
-      return;
-    }
+    if (produto.quantidade < 1) { toast('Produto sem estoque!'); return; }
     carrinho.push({
       id: produto.id,
       nome: produto.nome,
@@ -613,20 +431,17 @@ function adicionarAoCarrinho(produto) {
     });
   }
   atualizarCarrinho();
-
-  // foco no scanner escondido para evitar teclado virtual
+  // NÃO focar no campo visível — focar no input scanner escondido para evitar teclado
   if (scannerInputElement) {
     try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
   }
-
-  // toast de confirmação
-  showToast(`${produto.nome} adicionado ao carrinho`, { type: 'success', duration: 1400 });
+  // mostra feedback visual
+  toast('Item adicionado com sucesso');
 }
 
 function removerDoCarrinho(produtoId) {
   carrinho = carrinho.filter(item => item.id !== produtoId);
   atualizarCarrinho();
-  showToast('Item removido do carrinho', { type: 'info', duration: 1200 });
 }
 
 function alterarQuantidade(produtoId, novaQuantidade) {
@@ -634,7 +449,7 @@ function alterarQuantidade(produtoId, novaQuantidade) {
   const produto = produtos.find(p => p.id === produtoId);
   if (!item || !produto) return;
   if (novaQuantidade < 1) { removerDoCarrinho(produtoId); return; }
-  if (novaQuantidade > produto.quantidade) { showToast('Quantidade em estoque insuficiente!', { type: 'warning' }); return; }
+  if (novaQuantidade > produto.quantidade) { toast('Quantidade em estoque insuficiente!'); return; }
   item.quantidade = novaQuantidade;
   atualizarCarrinho();
 }
@@ -680,9 +495,7 @@ function atualizarCarrinho() {
   atualizarBotaoCarrinhoFlutuante(totalItensCount, total);
 }
 
-/* =========================
-   Modal de Finalização
-   ========================= */
+// Modal de finalização
 function abrirModalFinalizacao() {
   if (!resumoItens || !totalModal || !modalFinalizar) {
     console.warn('Elementos do modal de finalização não encontrados');
@@ -697,6 +510,7 @@ function abrirModalFinalizacao() {
   });
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   totalModal.textContent = `R$ ${total.toFixed(2)}`;
+  // sincroniza com select desktop (se existir)
   const selectDesktop = document.getElementById('formaPagamento');
   if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarSelecaoPagamento();
@@ -718,9 +532,7 @@ function atualizarInstrucaoPagamento(total) {
   if (instrucaoFinal) instrucaoFinal.classList.add('mostrar');
 }
 
-/* =========================
-   Confirmar Venda (pinpad)
-   ========================= */
+// Confirmar venda -> enviar para pinpad (rota /api/pinpad/pagar)
 async function confirmarVenda() {
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   try {
@@ -757,7 +569,7 @@ async function confirmarVenda() {
         }
       }
 
-      showToast('💳 Pagamento aprovado! Venda concluída com sucesso!', { type: 'success', duration: 1800 });
+      toast('Pagamento aprovado! Venda concluída com sucesso!');
       carrinho = [];
       atualizarCarrinho();
       if (modalFinalizar) modalFinalizar.style.display = 'none';
@@ -766,17 +578,15 @@ async function confirmarVenda() {
         try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
       }
     } else {
-      showToast(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`, { type: 'error', duration: 3000 });
+      toast(`Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`);
     }
   } catch (err) {
     console.error('Erro ao processar pagamento:', err);
-    showToast('Erro ao processar pagamento. Verifique a maquininha.', { type: 'error', duration: 3000 });
+    toast('Erro ao processar pagamento. Verifique a maquininha.');
   }
 }
 
-/* =========================
-   LEITOR (HID) - sem teclado virtual
-   ========================= */
+// ***************** LEITOR (HID) - sem teclado virtual *****************
 function ativarLeitorSemTeclado() {
   const scannerInput = scannerInputElement;
   const campoBuscaVisivel = campoBuscaElement;
@@ -856,9 +666,7 @@ function ativarLeitorSemTeclado() {
   });
 }
 
-/* =========================
-   buscarPorTermoOuAdicionar
-   ========================= */
+// busca por termo e adiciona
 function buscarPorTermoOuAdicionar(termo) {
   if (!termo) return;
   const termoLower = termo.toString().toLowerCase();
@@ -873,16 +681,15 @@ function buscarPorTermoOuAdicionar(termo) {
 
   if (produtoEncontrado) {
     if (produtoEncontrado.quantidade > 0) adicionarAoCarrinho(produtoEncontrado);
-    else showToast('Produto sem estoque!', { type: 'warning' });
+    else toast('Produto sem estoque!');
   } else {
     console.warn('Produto não encontrado:', termo);
-    showToast(`Produto não encontrado: ${termo}`, { type: 'warning', duration: 2000 });
+    // opcional: mostrar mensagem UI em vez de alert
+    toast('Produto não encontrado');
   }
 }
 
-/* =========================
-   Carrinho Mobile (flutuante/modal)
-   ========================= */
+// ************** Carrinho Mobile (flutuante/modal) *****************
 function inicializarCarrinhoMobile() {
   if (!btnAbrirCarrinho || !modalCarrinho) {
     return;
@@ -893,23 +700,21 @@ function inicializarCarrinhoMobile() {
 
   if (btnFinalizarVendaMobile) {
     btnFinalizarVendaMobile.addEventListener('click', () => {
-      if (carrinho.length === 0) { showToast('Adicione produtos ao carrinho antes de finalizar a venda!', { type: 'warning' }); return; }
+      if (carrinho.length === 0) { toast('Adicione produtos ao carrinho antes de finalizar a venda!'); return; }
       fecharCarrinhoMobile();
       abrirModalFinalizacao();
     });
   }
   if (btnCancelarVendaMobile) {
-    btnCancelarVendaMobile.addEventListener('click', async () => {
-      if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
-      const ok = await showConfirm('Deseja cancelar a venda e limpar o carrinho?', { title: 'Cancelar venda', confirmText: 'Sim, cancelar', cancelText: 'Não' });
-      if (!ok) return;
-      carrinho = [];
-      atualizarCarrinho();
-      fecharCarrinhoMobile();
-      if (scannerInputElement) {
-        try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-      }
-      showToast('Venda cancelada', { type: 'info' });
+    btnCancelarVendaMobile.addEventListener('click', () => {
+      if (carrinho.length === 0) { toast('Não há itens no carrinho para cancelar!'); return; }
+      confirmDialog('Deseja cancelar a venda e limpar o carrinho?').then(yes => {
+        if (!yes) return;
+        carrinho = [];
+        atualizarCarrinho();
+        fecharCarrinhoMobile();
+        if (scannerInputElement) scannerInputElement.focus();
+      });
     });
   }
 
@@ -979,99 +784,170 @@ function atualizarBotaoCarrinhoFlutuante(totalItens, total) {
   if (carrinhoTotalMobile) carrinhoTotalMobile.textContent = `R$ ${total.toFixed(2)}`;
 }
 
-/* =============================
-   AUTO-REFRESH POR INATIVIDADE
-   ============================= */
+// ----------------- REALTIME UPDATES (produtos + promocoes) -----------------
+function configurarRealtimeUpdates() {
+  // remove listeners antigos, se houver
+  removerRealtimeListeners();
 
-const INACTIVITY_TIMEOUT = 15 * 1000; // 15 segundos
-const CHECK_INTERVAL_MS = 5 * 1000;   // checar a cada 5 segundos
-let _lastActivity = Date.now();
-let _inactivityChecker = null;
+  if (!lojaId) return;
 
-// registra atividade do usuário para resetar o timer
-function _resetInactivityTimer() {
-  _lastActivity = Date.now();
+  const produtosRef = ref(db, `lojas/${lojaId}/produtos`);
+  const promRef = ref(db, `promocoes`);
+
+  // Ao detectar alteração em produtos, recarregamos produtos e aplicamos promoções atuais
+  produtosListenerUnsub = onValue(produtosRef, (snapshot) => {
+    (async () => {
+      const produtosObj = snapshot.exists() ? snapshot.val() : null;
+      const promAct = await verificarPromocoesAtivas();
+      atualizarProdutosLocais(produtosObj, promAct);
+      // não mexemos no carrinho, focus permanece no scannerInputElement
+    })();
+  });
+
+  // Ao detectar alteração nas promoções, recalculamos promoções e atualizamos produtos exibidos
+  promocoesListenerUnsub = onValue(promRef, (snapshot) => {
+    (async () => {
+      // somente atualizar promoções que afetem esta loja
+      const promAct = await verificarPromocoesAtivas();
+      // atualizar locais a partir da cópia atual dos produtos (reaplica promoções)
+      const produtosObj = produtos.reduce((acc, p) => { acc[p.id] = { ...p }; return acc; }, {});
+      atualizarProdutosLocais(produtosObj, promAct);
+    })();
+  });
 }
 
-// eventos que consideramos "atividade"
-const _activityEvents = ['mousemove','mousedown','touchstart','keydown','wheel','scroll','click','focus'];
-
-// adiciona listeners (passive para touch/scroll)
-_activityEvents.forEach(ev => {
-  document.addEventListener(ev, _resetInactivityTimer, { passive: true });
-});
-
-// função que diz se está aberto algum modal que não devemos interromper
-function _isModalOpenOrUserBusy() {
-  const modalOpen =
-    (typeof modalLogin !== 'undefined' && modalLogin && modalLogin.style.display === 'flex') ||
-    (typeof modalFinalizar !== 'undefined' && modalFinalizar && modalFinalizar.style.display === 'flex') ||
-    (typeof modalCarrinho !== 'undefined' && modalCarrinho && modalCarrinho.style.display === 'flex');
-
-  const vendaEmAndamento = (typeof carrinho !== 'undefined' && Array.isArray(carrinho) && carrinho.length > 0);
-
-  return modalOpen || vendaEmAndamento;
-}
-
-// tenta um "soft refresh" (recarregar somente os produtos/promos)
-// caso carregarProdutos não exista ou lance erro, faz reload completo
-async function _attemptSoftRefreshThenReloadIfNeeded() {
+function removerRealtimeListeners() {
   try {
-    if (typeof carregarProdutos === 'function') {
-      await carregarProdutos(); // atualiza produtos/promos
-      // se após 5s ainda estiver inativo, faz reload completo (garante que mudanças de configuração também apareçam)
-      setTimeout(() => {
-        if ((Date.now() - _lastActivity) >= 5000 && !_isModalOpenOrUserBusy()) {
-          console.log('Inatividade detectada: recarregando página (após soft refresh).');
-          location.reload();
-        } else {
-          // usuário voltou ou está ocupado — adia reload
-          _lastActivity = Date.now();
-        }
-      }, 5000);
-    } else {
-      // fallback: reload direto
-      location.reload();
+    if (produtosListenerUnsub) {
+      // onValue returns the unsubscribe function; call it
+      produtosListenerUnsub();
+      produtosListenerUnsub = null;
+    }
+    if (promocoesListenerUnsub) {
+      promocoesListenerUnsub();
+      promocoesListenerUnsub = null;
     }
   } catch (err) {
-    console.warn('Soft refresh falhou — recarregando página:', err);
-    location.reload();
+    // módulos firebase variam; se onValue retornar uma função, chamamos; se usar off(), chamar off()
+    try {
+      if (lojaId) off(ref(db, `lojas/${lojaId}/produtos`));
+      off(ref(db, 'promocoes'));
+    } catch (e) {
+      // silencioso
+    }
   }
 }
+// ---------------------------------------------------------------------------
 
-// inicia o watcher de inatividade
-function startInactivityWatcher() {
-  if (_inactivityChecker) clearInterval(_inactivityChecker);
-  _inactivityChecker = setInterval(() => {
-    const idle = Date.now() - _lastActivity;
-
-    if (idle >= INACTIVITY_TIMEOUT) {
-      // só recarrega se ninguém estiver com venda e sem modais abertos
-      if (_isModalOpenOrUserBusy()) {
-        // adia: considera que o usuário pode estar em uma operação crítica
-        console.log('Inatividade detectada, mas usuário está ocupado — adiando reload.');
-        _lastActivity = Date.now(); // adia o reload
-        return;
-      }
-
-      console.log('Inatividade detectada -> tentando atualizar automaticamente.');
-      // tentar primeiro atualizar produtos/promo (soft), depois recarregar se necessário
-      _attemptSoftRefreshThenReloadIfNeeded();
-      // e atualiza lastActivity pra não entrar em loop imediato
-      _lastActivity = Date.now();
-    }
-  }, CHECK_INTERVAL_MS);
+// UTILs: mensagens não-blocking (não saem da tela cheia)
+function toast(msg, timeout = 2500) {
+  // cria um toast simples no canto inferior direito
+  let t = document.createElement('div');
+  t.className = 'caixa-toast';
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position: 'fixed',
+    right: '20px',
+    bottom: '20px',
+    background: 'rgba(0,0,0,0.8)',
+    color: 'white',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    zIndex: 9999,
+    boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
+    fontSize: '14px'
+  });
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(8px)';
+  }, timeout - 300);
+  setTimeout(() => { try { t.remove(); } catch (e) {} }, timeout);
 }
 
-// expor controles (opcional) para debug manual
-window.__startInactivityWatcher = startInactivityWatcher;
-window.__resetInactivityTimer = _resetInactivityTimer;
+// Dialogs não-blocking com Promise (substituem confirm/alert)
+function confirmDialog(message) {
+  return new Promise(resolve => {
+    // cria overlay simples
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed', left: 0, top: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.6)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    });
 
-// iniciar automaticamente (caso já estejamos com DOM pronto)
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background: 'white', padding: '18px', borderRadius: '10px', maxWidth: '420px', width: '90%', textAlign: 'center',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+    });
 
-/* =========================
-   Inicialização final
-   ========================= */
+    const msg = document.createElement('div');
+    msg.textContent = message;
+    Object.assign(msg.style, { marginBottom: '14px', color: '#222' });
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '10px';
+    actions.style.justifyContent = 'center';
+
+    const btnNo = document.createElement('button');
+    btnNo.textContent = 'Cancelar';
+    btnNo.className = 'btn-danger';
+    btnNo.onclick = () => { overlay.remove(); resolve(false); };
+
+    const btnYes = document.createElement('button');
+    btnYes.textContent = 'OK';
+    btnYes.className = 'btn-primary';
+    btnYes.onclick = () => { overlay.remove(); resolve(true); };
+
+    actions.appendChild(btnNo);
+    actions.appendChild(btnYes);
+    box.appendChild(msg);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+function alertDialog(message) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed', left: 0, top: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.6)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background: 'white', padding: '18px', borderRadius: '10px', maxWidth: '420px', width: '90%', textAlign: 'center',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.25)'
+    });
+
+    const msg = document.createElement('div');
+    msg.textContent = message;
+    Object.assign(msg.style, { marginBottom: '14px', color: '#222' });
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.justifyContent = 'center';
+
+    const btnOk = document.createElement('button');
+    btnOk.textContent = 'OK';
+    btnOk.className = 'btn-primary';
+    btnOk.onclick = () => { overlay.remove(); resolve(); };
+
+    actions.appendChild(btnOk);
+    box.appendChild(msg);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+// Inicialização final quando DOM pronto
 document.addEventListener('DOMContentLoaded', () => {
   inicializarElementosDOM();
   // ativar leitor só se scannerInput existir
@@ -1080,9 +956,4 @@ document.addEventListener('DOMContentLoaded', () => {
   window.alterarQuantidade = alterarQuantidade;
   window.removerDoCarrinho = removerDoCarrinho;
   window.abrirModalFinalizacao = abrirModalFinalizacao;
-  // reinicia contador ao carregar a página
-  _lastActivity = Date.now();
-  startInactivityWatcher();
 });
-
-
