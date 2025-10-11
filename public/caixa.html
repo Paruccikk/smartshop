@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title> Smart Shop </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Smart Shop</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/caixa.css" />
 </head>
@@ -13,7 +13,7 @@
     <div class="modal-content login-content">
       <div class="login-header">
         <i class="fas fa-cash-register"></i>
-        <h2> Smart Shop</h2>
+        <h2>Smart Shop</h2>
         <p>Faça login para continuar</p>
       </div>
       
@@ -63,7 +63,7 @@
     <!-- Header Simples -->
     <div class="caixa-header">
       <div class="header-left">
-        <h1><i class="fas fa-cash-register"></i> Smart Shop - Caixa </h1>
+        <h1><i class="fas fa-cash-register"></i> Smart Shop - Caixa</h1>
         <div class="loja-info">
           <span id="lojaNome">Minha Loja</span>
           <span class="user-info"> | Usuário: <span id="userName">-</span></span>
@@ -88,11 +88,12 @@
             <input 
               type="text" 
               id="campoBusca" 
+              class="search-input"
               placeholder="Escaneie o código ou digite o nome do produto"
               autofocus
               autocomplete="off"
-              style="width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px;">
-          </div> <!-- fecha div.search-box -->
+            />
+          </div>
 
           <!-- INPUT ESCONDIDO PARA SCANNER -->
           <input
@@ -103,11 +104,11 @@
             autocorrect="off"
             autocapitalize="off"
             spellcheck="false"
-            style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0;"
+            class="scanner-hidden-input"
           />
 
-          <div id="resultados"></div>
-        </div> <!-- fecha div.search-container -->
+          <div id="resultados" class="resultados-container"></div>
+        </div>
 
         <div class="produtos-grid" id="produtosGrid">
           <!-- Produtos serão carregados aqui -->
@@ -144,7 +145,7 @@
         <div class="carrinho-acoes">
           <div class="form-group">
             <label for="formaPagamento">Forma de Pagamento:</label>
-            <select id="formaPagamento">
+            <select id="formaPagamento" class="form-control">
               <option value="pix">PIX</option>
               <option value="debito">Cartão Débito</option>
               <option value="credito">Cartão Crédito</option>

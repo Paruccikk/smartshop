@@ -611,31 +611,6 @@ body {
   }
 }
 
-@media (max-width: 480px) {
-  .caixa-header {
-    padding: 10px;
-  }
-  
-  .header-left h1 {
-    font-size: 1.3rem;
-  }
-  
-  .btn-primary, .btn-danger {
-    padding: 10px 15px;
-    font-size: 13px;
-  }
-  
-  .produtos-panel,
-  .carrinho-panel {
-    padding: 15px;
-  }
-  
-  .modal-content {
-    padding: 20px;
-    margin: 10px;
-  }
-}
-
 /* Estilos do Modal de Login */
 .login-modal {
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -1014,4 +989,453 @@ body {
 .resumo-item small {
   color: #27ae60;
   font-style: italic;
+}
+
+/* ===== RESPONSIVIDADE PARA CELULARES PEQUENOS (Gertec SK210) ===== */
+
+@media (max-width: 480px) {
+  .caixa-fullscreen {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .caixa-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    gap: 0;
+  }
+  
+  /* Painel de Produtos - Ocupa 60% da tela */
+  .produtos-panel {
+    flex: 0 0 60vh;
+    max-height: 60vh;
+    min-height: 60vh;
+    padding: 15px;
+    border-right: none;
+    border-bottom: 3px solid #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .search-container {
+    margin-bottom: 15px;
+    flex-shrink: 0;
+  }
+  
+  .search-box input {
+    padding: 12px 12px 12px 40px;
+    font-size: 14px;
+  }
+  
+  .produtos-grid {
+    flex: 1;
+    overflow-y: auto;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+    padding: 5px;
+    margin-top: 10px;
+  }
+  
+  .produto-card {
+    padding: 12px 8px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .produto-nome {
+    font-size: 13px;
+    margin-bottom: 5px;
+    line-height: 1.2;
+  }
+  
+  .produto-preco {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .produto-estoque {
+    font-size: 11px;
+  }
+  
+  /* Painel do Carrinho - Ocupa 40% da tela */
+  .carrinho-panel {
+    flex: 1;
+    min-height: 40vh;
+    max-height: 40vh;
+    padding: 15px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .carrinho-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+  }
+  
+  .carrinho-header h3 {
+    font-size: 16px;
+  }
+  
+  .carrinho-info {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+  
+  .carrinho-items {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    min-height: 120px;
+  }
+  
+  .carrinho-item {
+    padding: 10px 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .item-info {
+    width: 100%;
+  }
+  
+  .item-nome {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  
+  .item-detalhes {
+    font-size: 12px;
+    gap: 10px;
+  }
+  
+  .item-controles {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  .quantidade-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .quantidade-value {
+    min-width: 25px;
+    font-size: 14px;
+  }
+  
+  .item-total {
+    min-width: 70px;
+    font-size: 14px;
+    text-align: right;
+  }
+  
+  .remover-item {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .carrinho-totais {
+    padding-top: 15px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+  }
+  
+  .total-line {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .total-final {
+    font-size: 1.2rem;
+    padding-top: 8px;
+  }
+  
+  .carrinho-acoes {
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  
+  .btn-primary, .btn-danger {
+    padding: 10px 15px;
+    font-size: 13px;
+    min-height: 44px; /* Tamanho mínimo para touch */
+  }
+}
+
+/* ===== AJUSTES ESPECÍFICOS PARA TELAS MUITO PEQUENAS ===== */
+@media (max-width: 360px) {
+  .caixa-header {
+    padding: 8px 12px;
+    min-height: 60px;
+  }
+  
+  .header-left h1 {
+    font-size: 1.2rem;
+  }
+  
+  .header-right {
+    gap: 8px;
+  }
+  
+  .btn-primary, .btn-danger {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  
+  .produtos-panel {
+    padding: 12px;
+    flex: 0 0 55vh;
+    max-height: 55vh;
+  }
+  
+  .produtos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+  
+  .produto-card {
+    padding: 10px 6px;
+    min-height: 85px;
+  }
+  
+  .produto-nome {
+    font-size: 12px;
+  }
+  
+  .produto-preco {
+    font-size: 13px;
+  }
+  
+  .carrinho-panel {
+    padding: 12px;
+    flex: 1;
+    max-height: 45vh;
+  }
+}
+
+/* ===== MELHORIAS DE SCROLL PARA DISPOSITIVOS MÓVEIS ===== */
+.produtos-grid {
+  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  scroll-behavior: smooth;
+}
+
+.carrinho-items {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ===== BOTÕES MAIORES PARA TOUCH ===== */
+@media (max-width: 480px) {
+  .quantidade-btn,
+  .remover-item {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .quantidade-btn {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .remover-item {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* ===== HEADER COMPACTO PARA MOBILE ===== */
+@media (max-width: 480px) {
+  .caixa-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .header-left {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .header-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  
+  .loja-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* ===== AJUSTES PARA PROMOÇÕES NO MOBILE ===== */
+@media (max-width: 480px) {
+  .produto-promocao-tag {
+    font-size: 9px;
+    padding: 3px 6px;
+    margin-bottom: 5px;
+  }
+  
+  .preco-original {
+    font-size: 10px;
+  }
+  
+  .preco-promocional {
+    font-size: 13px;
+  }
+  
+  .carrinho-item .item-promocao {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}
+
+/* ===== GARANTIR QUE OS PAINÉIS NÃO SE SOBREPONHAM ===== */
+.caixa-container {
+  position: relative;
+}
+
+.produtos-panel,
+.carrinho-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== MELHORAR VISIBILIDADE DO CARRINHO ===== */
+@media (max-width: 480px) {
+  .carrinho-panel {
+    background: #f8f9fa;
+    border-top: 3px solid var(--primary);
+  }
+  
+  .carrinho-item {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+}
+
+/* ===== INDICADOR VISUAL DE SCROLL ===== */
+.produtos-grid::after,
+.carrinho-items::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(transparent, rgba(255,255,255,0.9));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.produtos-grid.scrollable::after,
+.carrinho-items.scrollable::after {
+  opacity: 1;
+}
+
+/* ===== CLASSES ESPECÍFICAS DO HTML ===== */
+.search-input {
+  width: 100%;
+  padding: 12px 15px 12px 45px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  background-color: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.scanner-hidden-input {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== MELHORIAS ESPECÍFICAS PARA GEREC SK210 ===== */
+@media (max-width: 480px) {
+  .search-input {
+    padding: 10px 10px 10px 40px;
+    font-size: 14px;
+    min-height: 44px; /* Tamanho mínimo para touch */
+  }
+  
+  .search-box i {
+    left: 12px;
+    font-size: 14px;
+  }
+  
+  /* Garantir que o select seja legível */
+  .form-control {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* ===== PREVENIR ZOOM EM INPUTS NO iOS ===== */
+@media (max-width: 480px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Previne zoom no iOS */
+  }
+}
+
+/* ===== MELHORAR VISIBILIDADE DO HEADER NO MOBILE ===== */
+@media (max-width: 480px) {
+  .caixa-header {
+    padding: 10px 15px;
+    min-height: 70px;
+  }
+  
+  .header-left h1 {
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+  }
+  
+  .loja-info {
+    font-size: 0.8rem;
+  }
+  
+  .header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .btn-primary, .btn-danger {
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 40px;
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* ===== GARANTIR QUE OS PAINÉIS NÃO SE SOBREPONHAM ===== */
+.caixa-container {
+  min-height: 0; /* Importante para flexbox em mobile */
+}
+
+.produtos-panel, .carrinho-panel {
+  min-height: 0; /* Importante para flexbox em mobile */
 }
