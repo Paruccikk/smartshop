@@ -1,4 +1,4 @@
-// caixa.js (atualizado para evitar abrir teclado virtual na SK210)
+// caixa.js (atualizado — toasts + proteções para SK210)
 // usa módulos ESM (type="module" no HTML)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -41,7 +41,123 @@ let carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount;
 let subtotalModal, totalVendaModal;
 let btnFinalizarVendaMobile, btnCancelarVendaMobile;
 
-// Inicializa todos os elementos do DOM (única função)
+/* =========================
+   TOASTS (notificações)
+   ========================= */
+function createToastContainer() {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    // estilos mínimos inline quando o CSS não for inserido
+    // (recomendo adicionar o CSS no arquivo caixa.css conforme instruído anteriormente)
+    document.body.appendChild(container);
+  }
+  return container;
+}
+
+/**
+ * showToast(message, options)
+ * options: { type: 'success'|'warning'|'error'|'info', duration: number(ms) }
+ */
+function showToast(message, options = {}) {
+  const { type = 'success', duration = 1600 } = options;
+  const container = createToastContainer();
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+
+  const iconMap = {
+    success: '✔',
+    warning: '⚠',
+    error: '✖',
+    info: 'ℹ'
+  };
+  const icon = iconMap[type] || '';
+
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><div class="toast-msg">${message}</div>`;
+
+  // small inline baseline styles if user forgot to include CSS for toasts
+  // (if caixa.css already contains toast styles, esses estilos não atrapalham)
+  toast.style.pointerEvents = 'auto';
+  toast.style.padding = '10px 14px';
+  toast.style.borderRadius = '10px';
+  toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+  toast.style.background = '#fff';
+  toast.style.display = 'flex';
+  toast.style.alignItems = 'center';
+  toast.style.gap = '10px';
+  toast.style.fontWeight = '600';
+  toast.style.maxWidth = '420px';
+  toast.style.marginTop = '8px';
+  toast.style.cursor = 'pointer';
+  // icon style
+  const iconEl = toast.querySelector('.toast-icon');
+  if (iconEl) {
+    iconEl.style.width = '36px';
+    iconEl.style.height = '36px';
+    iconEl.style.borderRadius = '8px';
+    iconEl.style.display = 'flex';
+    iconEl.style.alignItems = 'center';
+    iconEl.style.justifyContent = 'center';
+    iconEl.style.color = '#fff';
+    iconEl.style.fontWeight = '700';
+    iconEl.style.fontSize = '14px';
+    iconEl.style.background = (type === 'success' ? '#2a9d8f' : type === 'warning' ? '#f4a261' : type === 'error' ? '#e63946' : '#4361ee');
+  }
+
+  // ensure container exists in DOM and is positioned
+  const cont = createToastContainer();
+  cont.style.position = 'fixed';
+  cont.style.right = '20px';
+  cont.style.bottom = '24px';
+  cont.style.display = 'flex';
+  cont.style.flexDirection = 'column';
+  cont.style.gap = '8px';
+  cont.style.zIndex = '6000';
+  cont.appendChild(toast);
+
+  // animação de entrada
+  toast.style.transform = 'translateY(12px)';
+  toast.style.opacity = '0';
+  toast.style.transition = 'transform 240ms cubic-bezier(.2,.9,.3,1), opacity 240ms';
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateY(0)';
+    toast.style.opacity = '1';
+  });
+
+  const timeoutId = setTimeout(() => {
+    // saída
+    toast.style.transform = 'translateY(12px)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      try { cont.removeChild(toast); } catch (e) {}
+      if (cont.children.length === 0) {
+        try { document.body.removeChild(cont); } catch (e) {}
+      }
+    }, 260);
+  }, duration);
+
+  toast.addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    toast.style.transform = 'translateY(12px)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      try { cont.removeChild(toast); } catch (e) {}
+      if (cont.children.length === 0) {
+        try { document.body.removeChild(cont); } catch (e) {}
+      }
+    }, 200);
+  });
+
+  return toast;
+}
+
+/* =========================
+   Inicializar elementos DOM
+   ========================= */
 function inicializarElementosDOM() {
   // modais e áreas principais
   modalLogin = document.getElementById('modalLogin');
@@ -93,30 +209,29 @@ function inicializarElementosDOM() {
     try {
       campoBuscaElement.readOnly = true; // evita digitação direta
       campoBuscaElement.tabIndex = -1;   // remove do fluxo de tab
-      // impedir foco direto e redirecionar ao scanner oculto
+      // prevenir foco direto e redirecionar ao scanner oculto
       campoBuscaElement.addEventListener('focus', (e) => {
-        // não deixar o teclado abrir: redireciona foco para o scanner
+        e.preventDefault();
         if (scannerInputElement) {
-          e.preventDefault();
           try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
         }
-      }, { passive: false });
+      }, { passive: true });
 
       campoBuscaElement.addEventListener('click', (e) => {
+        e.preventDefault();
         if (scannerInputElement) {
-          e.preventDefault();
           try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
         }
-      }, { passive: false });
+      }, { passive: true });
 
       campoBuscaElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
         if (scannerInputElement) {
-          e.preventDefault();
           try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
         }
-      }, { passive: false });
+      }, { passive: true });
     } catch (err) {
-      // caso alguma plataforma não permita alterar readOnly/tabIndex, ignorar
+      // caso plataforma não permita alterar readOnly/tabIndex, ignorar
       console.warn('Não foi possível aplicar readOnly ao campo visível', err);
     }
   }
@@ -125,7 +240,9 @@ function inicializarElementosDOM() {
   inicializarCarrinhoMobile(); // se presente
 }
 
-// Event listeners (único lugar)
+/* =========================
+   configurar Event Listeners
+   ========================= */
 function configurarEventListeners() {
   // login
   if (loginForm) {
@@ -148,14 +265,14 @@ function configurarEventListeners() {
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
       if (carrinho.length > 0 && !confirm('Há uma venda em andamento. Tem certeza que deseja sair?')) return;
-      try { await signOut(auth); } catch (err) { console.error(err); alert('Erro ao sair.'); }
+      try { await signOut(auth); } catch (err) { console.error(err); showToast('Erro ao sair. Tente novamente', { type: 'error' }); }
     });
   }
 
   // finalizar (desktop)
   if (btnFinalizarVenda) {
     btnFinalizarVenda.addEventListener('click', () => {
-      if (carrinho.length === 0) { alert('Adicione produtos ao carrinho antes de finalizar a venda!'); return; }
+      if (carrinho.length === 0) { showToast('Adicione produtos ao carrinho antes de finalizar a venda!', { type: 'warning' }); return; }
       abrirModalFinalizacao();
     });
   }
@@ -169,7 +286,7 @@ function configurarEventListeners() {
   // cancelar venda (desktop)
   if (btnCancelarVenda) {
     btnCancelarVenda.addEventListener('click', () => {
-      if (carrinho.length === 0) { alert('Não há itens no carrinho para cancelar!'); return; }
+      if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
       if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
         carrinho = [];
         atualizarCarrinho();
@@ -220,7 +337,9 @@ function configurarEventListeners() {
   // NOTA: removemos listener de keydown no campo visível para evitar que inputs convencionais abram o teclado.
 }
 
-// auth state
+/* =========================
+   Auth state
+   ========================= */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
@@ -291,7 +410,9 @@ function getFriendlyError(code) {
   return errors[code] || 'Erro ao fazer login. Tente novamente.';
 }
 
-// promocoes
+/* =========================
+   Promoções & Produtos
+   ========================= */
 async function verificarPromocoesAtivas() {
   try {
     const promSnap = await get(ref(db, 'promocoes'));
@@ -312,7 +433,6 @@ async function verificarPromocoesAtivas() {
   }
 }
 
-// carregar produtos
 async function carregarProdutos() {
   try {
     const produtosSnap = await get(ref(db, `lojas/${lojaId}/produtos`));
@@ -339,7 +459,7 @@ async function carregarProdutos() {
     exibirProdutos(produtos);
   } catch (err) {
     console.error('Erro carregar produtos', err);
-    alert('Erro ao carregar produtos da loja.');
+    showToast('Erro ao carregar produtos da loja.', { type: 'error' });
   }
 }
 
@@ -376,7 +496,9 @@ function exibirProdutos(produtosLista) {
   });
 }
 
-// filtrar
+/* =========================
+   Filtrar produtos
+   ========================= */
 window.filtrarProdutos = function() {
   const termoRaw = (campoBuscaElement ? campoBuscaElement.value : '') || '';
   const termo = termoRaw.toLowerCase().trim();
@@ -389,15 +511,23 @@ window.filtrarProdutos = function() {
   exibirProdutos(produtosFiltrados);
 };
 
-// carrinho
+/* =========================
+   Carrinho
+   ========================= */
 function adicionarAoCarrinho(produto) {
   const precoFinal = produto.temPromocao ? produto.precoPromocional : produto.valor;
   const itemExistente = carrinho.find(item => item.id === produto.id);
   if (itemExistente) {
-    if (itemExistente.quantidade >= produto.quantidade) { alert('Quantidade em estoque insuficiente!'); return; }
+    if (itemExistente.quantidade >= produto.quantidade) {
+      showToast('Quantidade em estoque insuficiente!', { type: 'warning' });
+      return;
+    }
     itemExistente.quantidade++;
   } else {
-    if (produto.quantidade < 1) { alert('Produto sem estoque!'); return; }
+    if (produto.quantidade < 1) {
+      showToast('Produto sem estoque!', { type: 'warning' });
+      return;
+    }
     carrinho.push({
       id: produto.id,
       nome: produto.nome,
@@ -409,15 +539,20 @@ function adicionarAoCarrinho(produto) {
     });
   }
   atualizarCarrinho();
-  // NÃO focar no campo visível — focar no input scanner escondido para evitar teclado
+
+  // foco no scanner escondido para evitar teclado virtual
   if (scannerInputElement) {
     try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
   }
+
+  // toast de confirmação
+  showToast(`${produto.nome} adicionado ao carrinho`, { type: 'success', duration: 1400 });
 }
 
 function removerDoCarrinho(produtoId) {
   carrinho = carrinho.filter(item => item.id !== produtoId);
   atualizarCarrinho();
+  showToast('Item removido do carrinho', { type: 'info', duration: 1200 });
 }
 
 function alterarQuantidade(produtoId, novaQuantidade) {
@@ -425,7 +560,7 @@ function alterarQuantidade(produtoId, novaQuantidade) {
   const produto = produtos.find(p => p.id === produtoId);
   if (!item || !produto) return;
   if (novaQuantidade < 1) { removerDoCarrinho(produtoId); return; }
-  if (novaQuantidade > produto.quantidade) { alert('Quantidade em estoque insuficiente!'); return; }
+  if (novaQuantidade > produto.quantidade) { showToast('Quantidade em estoque insuficiente!', { type: 'warning' }); return; }
   item.quantidade = novaQuantidade;
   atualizarCarrinho();
 }
@@ -471,7 +606,9 @@ function atualizarCarrinho() {
   atualizarBotaoCarrinhoFlutuante(totalItensCount, total);
 }
 
-// Modal de finalização
+/* =========================
+   Modal de Finalização
+   ========================= */
 function abrirModalFinalizacao() {
   if (!resumoItens || !totalModal || !modalFinalizar) {
     console.warn('Elementos do modal de finalização não encontrados');
@@ -486,14 +623,14 @@ function abrirModalFinalizacao() {
   });
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   totalModal.textContent = `R$ ${total.toFixed(2)}`;
-  // mantém a seleção em PIX por padrão, sincroniza com select desktop se existir
+  // sincroniza com select desktop se houver
   const selectDesktop = document.getElementById('formaPagamento');
   if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarSelecaoPagamento();
   atualizarInstrucaoPagamento(total);
   modalFinalizar.style.display = 'flex';
 }
-window.abrirModalFinalizacao = abrirModalFinalizacao; // expor globalmente para evitar ReferenceError
+window.abrirModalFinalizacao = abrirModalFinalizacao; // expor globalmente
 
 function atualizarSelecaoPagamento() {
   document.querySelectorAll('.opcao-pagamento').forEach(opcao => opcao.classList.remove('selecionada'));
@@ -508,7 +645,9 @@ function atualizarInstrucaoPagamento(total) {
   if (instrucaoFinal) instrucaoFinal.classList.add('mostrar');
 }
 
-// Confirmar venda -> enviar para pinpad (rota /api/pinpad/pagar)
+/* =========================
+   Confirmar Venda (pinpad)
+   ========================= */
 async function confirmarVenda() {
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   try {
@@ -545,7 +684,7 @@ async function confirmarVenda() {
         }
       }
 
-      alert('💳 Pagamento aprovado! Venda concluída com sucesso!');
+      showToast('💳 Pagamento aprovado! Venda concluída com sucesso!', { type: 'success', duration: 1800 });
       carrinho = [];
       atualizarCarrinho();
       if (modalFinalizar) modalFinalizar.style.display = 'none';
@@ -554,15 +693,17 @@ async function confirmarVenda() {
         try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
       }
     } else {
-      alert(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`);
+      showToast(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`, { type: 'error', duration: 3000 });
     }
   } catch (err) {
     console.error('Erro ao processar pagamento:', err);
-    alert('Erro ao processar pagamento. Verifique a maquininha.');
+    showToast('Erro ao processar pagamento. Verifique a maquininha.', { type: 'error', duration: 3000 });
   }
 }
 
-// ***************** LEITOR (HID) - sem teclado virtual *****************
+/* =========================
+   LEITOR (HID) - sem teclado virtual
+   ========================= */
 function ativarLeitorSemTeclado() {
   const scannerInput = scannerInputElement;
   const campoBuscaVisivel = campoBuscaElement;
@@ -574,7 +715,7 @@ function ativarLeitorSemTeclado() {
 
   function garantirFoco() {
     try { scannerInput.focus({ preventScroll: true }); }
-    catch { try { scannerInput.focus(); } catch (e) { /* nothing */ } }
+    catch { scannerInput.focus(); }
   }
   garantirFoco();
 
@@ -583,21 +724,16 @@ function ativarLeitorSemTeclado() {
     if (document.activeElement !== scannerInput) garantirFoco();
   }, 700);
 
-  // limpar intervalo ao descarregar a página
-  window.addEventListener('unload', () => clearInterval(focoInterval));
-
   let buffer = '';
   let ultimoTempo = 0;
 
   async function processarBuffer(termoRaw) {
     const termo = (termoRaw || '').trim();
     if (!termo) return;
-    if (campoBuscaVisivel) {
-      try { campoBuscaVisivel.value = termo; } catch (e) { /* ignore */ }
-    }
+    if (campoBuscaVisivel) campoBuscaVisivel.value = termo; // só UX, campo é readonly
     buscarPorTermoOuAdicionar(termo);
     buffer = '';
-    try { scannerInput.value = ''; } catch (e) { /* ignore */ }
+    scannerInput.value = '';
     setTimeout(() => garantirFoco(), 100);
   }
 
@@ -618,40 +754,38 @@ function ativarLeitorSemTeclado() {
 
     if (e.key.length === 1) buffer += e.key;
 
-    try { clearTimeout(scannerInput._timeoutProcess); } catch (err) { /* ignore */ }
+    if (scannerInput && typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
     scannerInput._timeoutProcess = setTimeout(() => {
       if (buffer.length > 0) processarBuffer(buffer);
     }, 120);
   }, true);
 
   // também no input escondido (mais confiável quando ele tem foco)
-  try {
-    scannerInput.addEventListener('keydown', (e) => {
-      if (!e || typeof e.key !== 'string') return;
-      const agora = Date.now();
-      if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
-      ultimoTempo = agora;
+  scannerInput.addEventListener('keydown', (e) => {
+    if (!e || typeof e.key !== 'string') return;
+    const agora = Date.now();
+    if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
+    ultimoTempo = agora;
 
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        if (buffer.length > 0) processarBuffer(buffer);
-        buffer = '';
-        return;
-      }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (buffer.length > 0) processarBuffer(buffer);
+      buffer = '';
+      return;
+    }
 
-      if (e.key.length === 1) buffer += e.key;
+    if (e.key.length === 1) buffer += e.key;
 
-      try { clearTimeout(scannerInput._timeoutProcess); } catch (err) { /* ignore */ }
-      scannerInput._timeoutProcess = setTimeout(() => {
-        if (buffer.length > 0) processarBuffer(buffer);
-      }, 120);
-    });
-  } catch (err) {
-    console.warn('Não foi possível anexar listener ao scannerInput:', err);
-  }
+    if (typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
+    scannerInput._timeoutProcess = setTimeout(() => {
+      if (buffer.length > 0) processarBuffer(buffer);
+    }, 120);
+  });
 }
 
-// busca por termo e adiciona
+/* =========================
+   buscarPorTermoOuAdicionar
+   ========================= */
 function buscarPorTermoOuAdicionar(termo) {
   if (!termo) return;
   const termoLower = termo.toString().toLowerCase();
@@ -666,14 +800,16 @@ function buscarPorTermoOuAdicionar(termo) {
 
   if (produtoEncontrado) {
     if (produtoEncontrado.quantidade > 0) adicionarAoCarrinho(produtoEncontrado);
-    else alert('Produto sem estoque!');
+    else showToast('Produto sem estoque!', { type: 'warning' });
   } else {
     console.warn('Produto não encontrado:', termo);
-    // opcional: mostrar mensagem UI em vez de alert
+    showToast(`Produto não encontrado: ${termo}`, { type: 'warning', duration: 2000 });
   }
 }
 
-// ************** Carrinho Mobile (flutuante/modal) *****************
+/* =========================
+   Carrinho Mobile (flutuante/modal)
+   ========================= */
 function inicializarCarrinhoMobile() {
   if (!btnAbrirCarrinho || !modalCarrinho) {
     return;
@@ -684,14 +820,14 @@ function inicializarCarrinhoMobile() {
 
   if (btnFinalizarVendaMobile) {
     btnFinalizarVendaMobile.addEventListener('click', () => {
-      if (carrinho.length === 0) { alert('Adicione produtos ao carrinho antes de finalizar a venda!'); return; }
+      if (carrinho.length === 0) { showToast('Adicione produtos ao carrinho antes de finalizar a venda!', { type: 'warning' }); return; }
       fecharCarrinhoMobile();
       abrirModalFinalizacao();
     });
   }
   if (btnCancelarVendaMobile) {
     btnCancelarVendaMobile.addEventListener('click', () => {
-      if (carrinho.length === 0) { alert('Não há itens no carrinho para cancelar!'); return; }
+      if (carrinho.length === 0) { showToast('Não há itens no carrinho para cancelar!', { type: 'warning' }); return; }
       if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
         carrinho = [];
         atualizarCarrinho();
@@ -722,9 +858,6 @@ function fecharCarrinhoMobile() {
   if (modalCarrinho) {
     modalCarrinho.style.display = 'none';
     document.body.style.overflow = '';
-    if (scannerInputElement) {
-      try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
-    }
   }
 }
 
@@ -772,7 +905,9 @@ function atualizarBotaoCarrinhoFlutuante(totalItens, total) {
   if (carrinhoTotalMobile) carrinhoTotalMobile.textContent = `R$ ${total.toFixed(2)}`;
 }
 
-// Inicialização final quando DOM pronto
+/* =========================
+   Inicialização final
+   ========================= */
 document.addEventListener('DOMContentLoaded', () => {
   inicializarElementosDOM();
   // ativar leitor só se scannerInput existir
@@ -782,5 +917,3 @@ document.addEventListener('DOMContentLoaded', () => {
   window.removerDoCarrinho = removerDoCarrinho;
   window.abrirModalFinalizacao = abrirModalFinalizacao;
 });
-
-// Fim do arquivo
