@@ -115,8 +115,8 @@
         </div>
       </div>
 
-      <!-- Painel do Carrinho -->
-      <div class="carrinho-panel">
+      <!-- Painel do Carrinho (Desktop) -->
+      <div class="carrinho-panel carrinho-desktop">
         <div class="carrinho-header">
           <h3><i class="fas fa-shopping-cart"></i> Carrinho de Compras</h3>
           <div class="carrinho-info">
@@ -150,6 +150,69 @@
               <option value="debito">Cartão Débito</option>
               <option value="credito">Cartão Crédito</option>
             </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botão Flutuante do Carrinho (Mobile) -->
+      <div class="carrinho-flutuante" id="carrinhoFlutuante">
+        <button class="btn-carrinho-toggle" id="btnAbrirCarrinho">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="carrinho-badge" id="carrinhoBadge">0</span>
+          <span class="carrinho-total-mobile" id="carrinhoTotalMobile">R$ 0,00</span>
+        </button>
+      </div>
+
+      <!-- Modal do Carrinho (Mobile) -->
+      <div id="modalCarrinho" class="modal modal-carrinho">
+        <div class="modal-content carrinho-modal-content">
+          <div class="carrinho-modal-header">
+            <h3>
+              <i class="fas fa-shopping-cart"></i>
+              Carrinho de Compras
+              <span class="carrinho-modal-count" id="carrinhoModalCount">(0 itens)</span>
+            </h3>
+            <button class="btn-fechar-carrinho" id="btnFecharCarrinho">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="carrinho-modal-items" id="carrinhoModalItems">
+            <div class="carrinho-vazio">
+              <i class="fas fa-shopping-cart"></i>
+              <p>Carrinho vazio</p>
+            </div>
+          </div>
+
+          <div class="carrinho-modal-totais">
+            <div class="total-line">
+              <span>Subtotal:</span>
+              <span id="subtotalModal">R$ 0,00</span>
+            </div>
+            <div class="total-line total-final">
+              <span><strong>Total:</strong></span>
+              <span id="totalVendaModal"><strong>R$ 0,00</strong></span>
+            </div>
+          </div>
+
+          <div class="carrinho-modal-acoes">
+            <div class="form-group">
+              <label for="formaPagamentoMobile">Forma de Pagamento:</label>
+              <select id="formaPagamentoMobile" class="form-control">
+                <option value="pix">PIX</option>
+                <option value="debito">Cartão Débito</option>
+                <option value="credito">Cartão Crédito</option>
+              </select>
+            </div>
+            
+            <div class="botoes-acoes">
+              <button id="btnCancelarVendaMobile" class="btn-danger">
+                <i class="fas fa-times-circle"></i> Cancelar
+              </button>
+              <button id="btnFinalizarVendaMobile" class="btn-primary">
+                <i class="fas fa-check-circle"></i> Finalizar
+              </button>
+            </div>
           </div>
         </div>
       </div>

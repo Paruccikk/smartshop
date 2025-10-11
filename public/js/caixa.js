@@ -30,6 +30,178 @@ let lojaNome, userName, btnLogout;
 let produtosGrid, carrinhoItems, totalItens, subtotalElement, totalVendaElement;
 let modalFinalizar, resumoItens, totalModal, valorPagamentoFinal;
 let btnConfirmarVenda, btnVoltar, btnFinalizarVenda, btnCancelarVenda;
+let campoBuscaElement; // elemento visível de busca (campoBusca)
+let scannerInputElement; // input escondido para scanner
+
+// Variáveis globais para controle do carrinho mobile
+let modalCarrinho, btnAbrirCarrinho, btnFecharCarrinho, carrinhoModalItems;
+let carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount;
+let subtotalModal, totalVendaModal, formaPagamentoMobile;
+let btnFinalizarVendaMobile, btnCancelarVendaMobile;
+
+// Inicializar elementos do carrinho mobile
+function inicializarCarrinhoMobile() {
+  modalCarrinho = document.getElementById('modalCarrinho');
+  btnAbrirCarrinho = document.getElementById('btnAbrirCarrinho');
+  btnFecharCarrinho = document.getElementById('btnFecharCarrinho');
+  carrinhoModalItems = document.getElementById('carrinhoModalItems');
+  carrinhoBadge = document.getElementById('carrinhoBadge');
+  carrinhoTotalMobile = document.getElementById('carrinhoTotalMobile');
+  carrinhoModalCount = document.getElementById('carrinhoModalCount');
+  subtotalModal = document.getElementById('subtotalModal');
+  totalVendaModal = document.getElementById('totalVendaModal');
+  formaPagamentoMobile = document.getElementById('formaPagamentoMobile');
+  btnFinalizarVendaMobile = document.getElementById('btnFinalizarVendaMobile');
+  btnCancelarVendaMobile = document.getElementById('btnCancelarVendaMobile');
+
+  // Event listeners
+  if (btnAbrirCarrinho) {
+    btnAbrirCarrinho.addEventListener('click', abrirCarrinhoMobile);
+  }
+  
+  if (btnFecharCarrinho) {
+    btnFecharCarrinho.addEventListener('click', fecharCarrinhoMobile);
+  }
+  
+  if (btnFinalizarVendaMobile) {
+    btnFinalizarVendaMobile.addEventListener('click', () => {
+      if (carrinho.length === 0) {
+        alert('Adicione produtos ao carrinho antes de finalizar a venda!');
+        return;
+      }
+      fecharCarrinhoMobile();
+      abrirModalFinalizacao();
+    });
+  }
+  
+  if (btnCancelarVendaMobile) {
+    btnCancelarVendaMobile.addEventListener('click', () => {
+      if (carrinho.length === 0) {
+        alert('Não há itens no carrinho para cancelar!');
+        return;
+      }
+
+      if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
+        carrinho = [];
+        atualizarCarrinho();
+        fecharCarrinhoMobile();
+        document.getElementById('campoBusca').focus();
+      }
+    });
+  }
+
+  // Fechar modal clicando fora
+  if (modalCarrinho) {
+    modalCarrinho.addEventListener('click', (e) => {
+      if (e.target === modalCarrinho) {
+        fecharCarrinhoMobile();
+      }
+    });
+  }
+}
+
+// Abrir carrinho mobile
+function abrirCarrinhoMobile() {
+  if (modalCarrinho) {
+    modalCarrinho.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    atualizarCarrinhoModal();
+  }
+}
+
+// Fechar carrinho mobile
+function fecharCarrinhoMobile() {
+  if (modalCarrinho) {
+    modalCarrinho.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+// Atualizar carrinho mobile
+function atualizarCarrinhoModal() {
+  if (!carrinhoModalItems) return;
+  
+  carrinhoModalItems.innerHTML = '';
+
+  if (carrinho.length === 0) {
+    carrinhoModalItems.innerHTML = `
+      <div class="carrinho-vazio">
+        <i class="fas fa-shopping-cart"></i>
+        <p>Carrinho vazio</p>
+      </div>
+    `;
+  } else {
+    carrinho.forEach(item => {
+      const itemElement = document.createElement('div');
+      itemElement.className = 'carrinho-modal-item';
+      itemElement.innerHTML = `
+        <div class="carrinho-modal-item-info">
+          <div class="carrinho-modal-item-nome">
+            ${item.nome}
+            ${item.temPromocao ? '<span class="item-promocao"><i class="fas fa-tag"></i> PROMO</span>' : ''}
+          </div>
+          <div class="carrinho-modal-item-detalhes">
+            <span>R$ ${item.preco.toFixed(2)}</span>
+            <span>Estoque: ${item.estoque}</span>
+          </div>
+        </div>
+        <div class="carrinho-modal-item-controles">
+          <button class="carrinho-modal-quantidade-btn" onclick="alterarQuantidade('${item.id}', ${item.quantidade - 1})">-</button>
+          <span class="carrinho-modal-quantidade-value">${item.quantidade}</span>
+          <button class="carrinho-modal-quantidade-btn" onclick="alterarQuantidade('${item.id}', ${item.quantidade + 1})">+</button>
+          <span class="carrinho-modal-item-total">R$ ${(item.preco * item.quantidade).toFixed(2)}</span>
+          <button class="carrinho-modal-remover-item" onclick="removerDoCarrinho('${item.id}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      carrinhoModalItems.appendChild(itemElement);
+    });
+  }
+
+  // Atualizar totais
+  const totalItensCount = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+  const total = carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
+
+  if (carrinhoModalCount) carrinhoModalCount.textContent = `(${totalItensCount} ${totalItensCount === 1 ? 'item' : 'itens'})`;
+  if (subtotalModal) subtotalModal.textContent = `R$ ${total.toFixed(2)}`;
+  if (totalVendaModal) totalVendaModal.textContent = `R$ ${total.toFixed(2)}`;
+  
+  // Atualizar botão flutuante
+  atualizarBotaoCarrinhoFlutuante(totalItensCount, total);
+}
+
+// Atualizar botão flutuante
+function atualizarBotaoCarrinhoFlutuante(totalItens, total) {
+  if (carrinhoBadge) {
+    carrinhoBadge.textContent = totalItens;
+    carrinhoBadge.style.display = totalItens > 0 ? 'flex' : 'none';
+  }
+  
+  if (carrinhoTotalMobile) {
+    carrinhoTotalMobile.textContent = `R$ ${total.toFixed(2)}`;
+  }
+}
+
+// Modificar a função atualizarCarrinho existente
+function atualizarCarrinho() {
+  // ... código existente do carrinho desktop ...
+  
+  // Atualizar carrinho mobile
+  atualizarCarrinhoModal();
+  
+  const totalItensCount = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+  const total = carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
+  
+  atualizarBotaoCarrinhoFlutuante(totalItensCount, total);
+}
+
+// Inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarElementosDOM();
+  inicializarCarrinhoMobile(); // Adicionar esta linha
+});
+
 
 // Inicializar elementos DOM quando disponíveis
 function inicializarElementosDOM() {
@@ -58,10 +230,12 @@ function inicializarElementosDOM() {
   btnFinalizarVenda = document.getElementById('btnFinalizarVenda');
   btnCancelarVenda = document.getElementById('btnCancelarVenda');
 
+  campoBuscaElement = document.getElementById('campoBusca');
+  scannerInputElement = document.getElementById('scannerInput');
+
   // Configurar event listeners apenas se os elementos existirem
   configurarEventListeners();
 }
-
 
 // Configurar todos os event listeners
 function configurarEventListeners() {
@@ -139,7 +313,7 @@ function configurarEventListeners() {
       if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
         carrinho = [];
         atualizarCarrinho();
-        document.getElementById('searchProduto').focus();
+        if (campoBuscaElement) campoBuscaElement.focus();
       }
     });
   }
@@ -177,6 +351,21 @@ function configurarEventListeners() {
       return 'Há uma venda em andamento. Tem certeza que deseja sair?';
     }
   });
+
+  // Se o campo de busca visível existir, permitir busca por Enter manual também
+  if (campoBuscaElement) {
+    campoBuscaElement.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const termo = campoBuscaElement.value.trim();
+        if (termo) {
+          buscarPorTermoOuAdicionar(termo);
+          campoBuscaElement.value = '';
+          setTimeout(() => campoBuscaElement.focus(), 100);
+        }
+      }
+    });
+  }
 }
 
 // Verificar estado de autenticação
@@ -408,7 +597,7 @@ function exibirProdutos(produtosLista) {
 
 // Filtrar produtos
 window.filtrarProdutos = function() {
-  const termo = document.getElementById('searchProduto').value.toLowerCase().trim();
+  const termo = (campoBuscaElement ? campoBuscaElement.value : '').toLowerCase().trim();
   
   if (!termo) {
     exibirProdutos(produtos);
@@ -451,7 +640,7 @@ function adicionarAoCarrinho(produto) {
   }
 
   atualizarCarrinho();
-  document.getElementById('searchProduto').focus();
+  if (campoBuscaElement) campoBuscaElement.focus();
 }
 
 function removerDoCarrinho(produtoId) {
@@ -593,7 +782,7 @@ async function confirmarVenda() {
     const resultado = await response.json();
 
     // 2️⃣ Verifica retorno do terminal
-    if (resultado.status === 'aprovado') {
+    if (resultado.status === 'aprovado' || resultado.status === 'aprovado_simulado') {
       // Pagamento aprovado — registrar venda
       const vendaData = {
         data: new Date().toISOString(),
@@ -602,7 +791,9 @@ async function confirmarVenda() {
         formaPagamento: formaPagamentoSelecionada,
         status: 'concluída',
         vendedor: usuarioLogado.nome || usuarioLogado.email,
-        vendedorId: usuarioLogado.uid
+        vendedorId: usuarioLogado.uid,
+        autorizacao: resultado.autorizacao || null,
+        nsu: resultado.nsu || null
       };
 
       const novaVendaRef = push(ref(db, `lojas/${lojaId}/vendas`));
@@ -624,7 +815,7 @@ async function confirmarVenda() {
       atualizarCarrinho();
       modalFinalizar.style.display = 'none';
       await carregarProdutos();
-      document.getElementById('searchProduto').focus();
+      if (campoBuscaElement) campoBuscaElement.focus();
     } 
     else {
       alert(`❌ Pagamento não aprovado: ${resultado.mensagem || 'Erro desconhecido'}`);
@@ -641,8 +832,8 @@ async function confirmarVenda() {
 // Deve ser carregado/ativado após inicializar elementos DOM (inicializarElementosDOM)
 
 function ativarLeitorSemTeclado() {
-  const scannerInput = document.getElementById('scannerInput');
-  const campoBuscaVisivel = document.getElementById('campoBusca');
+  const scannerInput = scannerInputElement;
+  const campoBuscaVisivel = campoBuscaElement;
 
   if (!scannerInput) {
     console.warn('scannerInput não encontrado. Adicione o input escondido no HTML.');
@@ -668,7 +859,6 @@ function ativarLeitorSemTeclado() {
   // Buffer para juntar caracteres do scanner
   let buffer = '';
   let ultimoTempo = 0;
-  const MAX_IDLE = 40; // ms entre caracteres; scanners enviam caracteres muito rápidos (10-30ms)
   
   // Função para processar o conteúdo lido
   async function processarBuffer(termoRaw) {
@@ -709,9 +899,8 @@ function ativarLeitorSemTeclado() {
     }
 
     // anexa caractere
-    buffer += e.key;
-    // se não usar Enter (alguns leitores não enviam Enter), podemos usar timeout para processar
-    // aqui um timeout que processa 120ms após último caractere
+    if (e.key.length === 1) buffer += e.key;
+    // timeout para quando scanner não envia Enter
     clearTimeout(scannerInput._timeoutProcess);
     scannerInput._timeoutProcess = setTimeout(() => {
       if (buffer.length > 0) processarBuffer(buffer);
@@ -762,7 +951,7 @@ function buscarPorTermoOuAdicionar(termo) {
   } else {
     // opcional: mostrar mensagem visual em vez de alert
     console.warn('Produto não encontrado:', termo);
-    //alert(`Produto não encontrado: ${termo}`);
+    // alert(`Produto não encontrado: ${termo}`);
   }
 }
 
@@ -770,7 +959,6 @@ document.addEventListener('DOMContentLoaded', function() {
   inicializarElementosDOM();
   ativarLeitorSemTeclado();
 });
-
 
 // Exportar funções para o escopo global
 window.alterarQuantidade = alterarQuantidade;
