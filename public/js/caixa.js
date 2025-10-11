@@ -983,8 +983,8 @@ function atualizarBotaoCarrinhoFlutuante(totalItens, total) {
    AUTO-REFRESH POR INATIVIDADE
    ============================= */
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos
-const CHECK_INTERVAL_MS = 60 * 1000; // checar a cada 1 minuto
+const INACTIVITY_TIMEOUT = 15 * 1000; // 15 segundos
+const CHECK_INTERVAL_MS = 5 * 1000;   // checar a cada 5 segundos
 let _lastActivity = Date.now();
 let _inactivityChecker = null;
 
@@ -1084,4 +1084,5 @@ document.addEventListener('DOMContentLoaded', () => {
   _lastActivity = Date.now();
   startInactivityWatcher();
 });
+
 
