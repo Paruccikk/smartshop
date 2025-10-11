@@ -336,3 +336,82 @@ html, body {
     position: fixed;
     width: 100%;
 }
+
+/* Reset para WebView */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+}
+
+/* Permitir seleção em inputs */
+input, textarea {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Otimizar para touch */
+button, a {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+* {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+    }
+
+    /* Permitir seleção em inputs */
+    input, textarea, select {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+    }
+
+    /* Otimizar para touch */
+    button, a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* WebView specific styles */
+    .webview-environment {
+        touch-action: pan-x pan-y;
+    }
+
+    .webview-body {
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    /* Loading state */
+    .app-loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .app-loaded *:focus {
+        outline: none !important;
+    }

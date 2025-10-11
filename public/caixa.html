@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
   <title>Smart Shop</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="css/caixa.css" />
 </head>
+
 <body>
   <!-- Modal de Login -->
   <div id="modalLogin" class="modal login-modal">
@@ -289,21 +291,70 @@
     </div>
   </div>
 
-  <script>
-// Tentar entrar em modo tela cheia
-function enterFullscreen() {
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    } else if (document.documentElement.webkitRequestFullscreen) {
-        document.documentElement.webkitRequestFullscreen();
-    }
-}
+  <!-- Scripts WebView (adicionar antes do seu caixa.js) -->
+  <script src="js/webview-detector.js"></script>
+  <script src="js/fullscreen-helper.js"></script>
+  <script src="js/android-interface.js"></script>
+  <script src="js/app-main.js"></script>
 
-// Executar quando a página carregar
-window.addEventListener('load', enterFullscreen);
-</script>
-
-  <!-- carregamento do módulo principal (caixa.js) -->
+  <!-- Seu script principal -->
   <script type="module" src="js/caixa.js"></script>
+
+  <!-- Script para inicialização WebView -->
+  <script>
+    // Inicializar quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        // Garantir que o body tenha as classes do WebView
+        if (typeof webViewDetector !== 'undefined' && webViewDetector.isWebViewEnvironment()) {
+            document.body.classList.add('webview-body');
+            document.documentElement.classList.add('webview-environment');
+            
+            // Configurar botão voltar do Android
+            if (typeof fullscreenHelper !== 'undefined') {
+                fullscreenHelper.setupBackButton(function() {
+                    // Lógica customizada para o botão voltar no seu app
+                    if (document.getElementById('modalFinalizar').style.display === 'block') {
+                        // Se estiver no modal de finalização, voltar para o caixa
+                        document.getElementById('modalFinalizar').style.display = 'none';
+                    } else if (document.getElementById('modalCarrinho').style.display === 'block') {
+                        // Se estiver no carrinho mobile, fechar
+                        document.getElementById('modalCarrinho').style.display = 'none';
+                    } else {
+                        // Senão, usar comportamento padrão
+                        fullscreenHelper.handleBackButton();
+                    }
+                });
+            }
+
+            // Enviar mensagem para o app informando que está pronto
+            if (typeof androidInterface !== 'undefined') {
+                setTimeout(() => {
+                    androidInterface.sendToApp({ 
+                        action: 'appReady',
+                        page: 'caixa',
+                        timestamp: new Date().toISOString()
+                    });
+                }, 1000);
+            }
+        }
+
+        // Forçar fullscreen em qualquer interação (fallback)
+        document.addEventListener('click', function() {
+            if (typeof fullscreenHelper !== 'undefined') {
+                fullscreenHelper.enterFullscreen();
+            }
+        });
+    });
+
+    // Fallback para fullscreen se os scripts não carregarem
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(e => console.log('Fullscreen fallback error:', e));
+            }
+        }, 500);
+    });
+  </script>
 </body>
 </html>

@@ -95,17 +95,26 @@ function inicializarElementosDOM() {
       campoBuscaElement.tabIndex = -1;   // remove do fluxo de tab
       // impedir foco direto e redirecionar ao scanner oculto
       campoBuscaElement.addEventListener('focus', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
+        // não deixar o teclado abrir: redireciona foco para o scanner
+        if (scannerInputElement) {
+          e.preventDefault();
+          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+        }
+      }, { passive: false });
+
       campoBuscaElement.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
+        if (scannerInputElement) {
+          e.preventDefault();
+          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+        }
+      }, { passive: false });
+
       campoBuscaElement.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
+        if (scannerInputElement) {
+          e.preventDefault();
+          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+        }
+      }, { passive: false });
     } catch (err) {
       // caso alguma plataforma não permita alterar readOnly/tabIndex, ignorar
       console.warn('Não foi possível aplicar readOnly ao campo visível', err);
@@ -164,7 +173,9 @@ function configurarEventListeners() {
       if (confirm('Deseja cancelar a venda e limpar o carrinho?')) {
         carrinho = [];
         atualizarCarrinho();
-        if (scannerInputElement) scannerInputElement.focus();
+        if (scannerInputElement) {
+          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+        }
         fecharCarrinhoMobile();
       }
     });
@@ -475,8 +486,7 @@ function abrirModalFinalizacao() {
   });
   const total = carrinho.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   totalModal.textContent = `R$ ${total.toFixed(2)}`;
-  // mantém a seleção em PIX por padrão
-  // se quiser sincronizar com select visível (desktop), ler o value do select e atualizar formaPagamentoSelecionada
+  // mantém a seleção em PIX por padrão, sincroniza com select desktop se existir
   const selectDesktop = document.getElementById('formaPagamento');
   if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarSelecaoPagamento();
@@ -564,7 +574,7 @@ function ativarLeitorSemTeclado() {
 
   function garantirFoco() {
     try { scannerInput.focus({ preventScroll: true }); }
-    catch { scannerInput.focus(); }
+    catch { try { scannerInput.focus(); } catch (e) { /* nothing */ } }
   }
   garantirFoco();
 
@@ -573,16 +583,21 @@ function ativarLeitorSemTeclado() {
     if (document.activeElement !== scannerInput) garantirFoco();
   }, 700);
 
+  // limpar intervalo ao descarregar a página
+  window.addEventListener('unload', () => clearInterval(focoInterval));
+
   let buffer = '';
   let ultimoTempo = 0;
 
   async function processarBuffer(termoRaw) {
     const termo = (termoRaw || '').trim();
     if (!termo) return;
-    if (campoBuscaVisivel) campoBuscaVisivel.value = termo; // só UX, campo é readonly
+    if (campoBuscaVisivel) {
+      try { campoBuscaVisivel.value = termo; } catch (e) { /* ignore */ }
+    }
     buscarPorTermoOuAdicionar(termo);
     buffer = '';
-    scannerInput.value = '';
+    try { scannerInput.value = ''; } catch (e) { /* ignore */ }
     setTimeout(() => garantirFoco(), 100);
   }
 
@@ -603,33 +618,37 @@ function ativarLeitorSemTeclado() {
 
     if (e.key.length === 1) buffer += e.key;
 
-    if (scannerInput && typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
+    try { clearTimeout(scannerInput._timeoutProcess); } catch (err) { /* ignore */ }
     scannerInput._timeoutProcess = setTimeout(() => {
       if (buffer.length > 0) processarBuffer(buffer);
     }, 120);
   }, true);
 
   // também no input escondido (mais confiável quando ele tem foco)
-  scannerInput.addEventListener('keydown', (e) => {
-    if (!e || typeof e.key !== 'string') return;
-    const agora = Date.now();
-    if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
-    ultimoTempo = agora;
+  try {
+    scannerInput.addEventListener('keydown', (e) => {
+      if (!e || typeof e.key !== 'string') return;
+      const agora = Date.now();
+      if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
+      ultimoTempo = agora;
 
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (buffer.length > 0) processarBuffer(buffer);
-      buffer = '';
-      return;
-    }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (buffer.length > 0) processarBuffer(buffer);
+        buffer = '';
+        return;
+      }
 
-    if (e.key.length === 1) buffer += e.key;
+      if (e.key.length === 1) buffer += e.key;
 
-    if (typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
-    scannerInput._timeoutProcess = setTimeout(() => {
-      if (buffer.length > 0) processarBuffer(buffer);
-    }, 120);
-  });
+      try { clearTimeout(scannerInput._timeoutProcess); } catch (err) { /* ignore */ }
+      scannerInput._timeoutProcess = setTimeout(() => {
+        if (buffer.length > 0) processarBuffer(buffer);
+      }, 120);
+    });
+  } catch (err) {
+    console.warn('Não foi possível anexar listener ao scannerInput:', err);
+  }
 }
 
 // busca por termo e adiciona
@@ -677,7 +696,9 @@ function inicializarCarrinhoMobile() {
         carrinho = [];
         atualizarCarrinho();
         fecharCarrinhoMobile();
-        if (scannerInputElement) scannerInputElement.focus();
+        if (scannerInputElement) {
+          try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+        }
       }
     });
   }
@@ -701,6 +722,9 @@ function fecharCarrinhoMobile() {
   if (modalCarrinho) {
     modalCarrinho.style.display = 'none';
     document.body.style.overflow = '';
+    if (scannerInputElement) {
+      try { scannerInputElement.focus({ preventScroll: true }); } catch { scannerInputElement.focus(); }
+    }
   }
 }
 
