@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel - Smart Shop</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/painel.css" />
+  <link rel="stylesheet" href="css/menu.css" />
+</head>
+<body>
+
+  <div id="menu-container"></div>
+
+    <div class="main-content">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1><i class="fas fa-tachometer-alt"></i> Painel Smart Shop</h1>
+          <p id="nomeLoja" class="store-name"><i class="fas fa-store"></i> <span>Carregando nome da loja...</span></p>
+        </div>
+        <div class="user-info">
+          <span id="userEmail"></span>
+          <button id="btnSair" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
+      </header>
+
+      <main>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+            <div class="stat-info">
+              <h3>Produtos em Estoque</h3>
+              <span id="totalProdutos" class="stat-value">0</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-info">
+              <h3>Vendas do Dia</h3>
+              <span id="vendasDia" class="stat-value">R$ 0,00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="alerts-grid">
+          <div class="alert-card warning">
+            <h3><i class="fas fa-exclamation-triangle"></i> Produtos Fora de Estoque</h3>
+            <ul id="produtosForaEstoque" class="alert-list">
+              <li>Carregando...</li>
+            </ul>
+          </div>
+          
+          <div class="alert-card danger">
+            <h3><i class="fas fa-calendar-times"></i> Produtos Vencidos</h3>
+            <ul id="produtosVencidos" class="alert-list">
+              <li>Carregando...</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button id="btnCaixa" class="action-btn primary">
+            <i class="fas fa-cash-register"></i> Ir para Caixa
+          </button>
+          <button id="btnEstoque" class="action-btn">
+            <i class="fas fa-box-open"></i> Gerenciar Estoque
+          </button>
+        </div>
+
+      <div class="recent-sales">
+        <h2><i class="fas fa-history"></i> Últimas Vendas</h2>
+
+        <label for="filtroFormaPagamento">Filtrar por forma de pagamento:</label>
+        <select id="filtroFormaPagamento" style="margin-bottom: 15px;">
+          <option value="todos">Todos</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Débito">Débito</option>
+          <option value="Crédito">Crédito</option>
+          <option value="Pix">Pix</option>
+        </select>
+
+        <ul id="listaVendasRecentes" class="sales-list">
+          <li>Carregando histórico de vendas...</li>
+        </ul>
+      </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/painel.js"></script>
+  <script src="js/menu.js"></script>  <!-- script do menu fixo -->
+
+    <!-- Scripts -->
+  <script>
+    // Carregar menu.html dentro do container
+    fetch('menu.html')
+  .then(res => res.text())
+  .then(html => {
+    document.getElementById('menu-container').innerHTML = html;
+    window.initMenu(); // inicializa o menu depois de inserir o HTML
+  })
+  .catch(err => console.error('Erro ao carregar o menu:', err));
+
+  </script>
+
+</body>
+</html>

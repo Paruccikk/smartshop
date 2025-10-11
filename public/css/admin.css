@@ -1,0 +1,226 @@
+.container {
+  padding: 30px;
+}
+
+h1, h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.topo-admin {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#pesquisa {
+  flex: 1;
+  min-width: 250px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+button {
+  background-color: #4b63ff;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #3748c5;
+}
+
+/* Filtros rápidos de aprovação */
+.filtros-globais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.filtros-globais button {
+  padding: 6px 12px;
+  background-color: #5a4fcf;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.filtros-globais button:hover {
+  background-color: #4237a0;
+}
+
+/* Tabelas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background: #f4f4f4;
+  font-weight: 600;
+}
+
+tr:hover {
+  background: #fafafa;
+}
+
+/* Botões de ação na tabela */
+.btn-editar {
+  background-color: #4b63ff;
+}
+
+.btn-reset {
+  background-color: #ff9f1c;
+}
+
+.btn-excluir {
+  background-color: #e63946;
+}
+
+.btn-primary {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #e63946;
+  color: white;
+}
+
+.btn-editar, .btn-reset, .btn-excluir, .btn-primary, .btn-danger {
+  padding: 6px 10px;
+  margin-right: 5px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-editar:hover { background-color: #3748c5; }
+.btn-reset:hover { background-color: #cc7a00; }
+.btn-excluir:hover, .btn-danger:hover { background-color: #c1121f; }
+.btn-primary:hover { background-color: #388e3c; }
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  width: 400px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  color: #333;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+/* --- Container de filtros --- */
+.filtros-vendas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 15px 0;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.filtros-vendas label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.filtros-vendas input,
+.filtros-vendas button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.filtros-vendas input[type="date"],
+.filtros-vendas input[type="month"],
+.filtros-vendas input[type="number"] {
+  width: 140px;
+}
+
+.filtros-vendas button {
+  background-color: #5a4fcf;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.filtros-vendas button:hover {
+  background-color: #4237a0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .filtros-vendas, .filtros-globais {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filtros-vendas input[type="date"],
+  .filtros-vendas input[type="month"],
+  .filtros-vendas input[type="number"] {
+    width: 100%;
+  }
+
+  .filtros-vendas button,
+  .filtros-globais button {
+    width: 100%;
+  }
+}

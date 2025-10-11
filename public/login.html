@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Smart Shop </title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+  <div class="brand">
+    <div class="logo-placeholder"></div> <!-- Removido o ícone padrão -->
+    <h1> Smart Shop </h1>
+  </div>
+  
+  <form id="loginForm">
+    <h2>Acessar Sistema</h2>
+    
+    <div class="input-group">
+      <i class="fas fa-envelope"></i>
+      <input type="email" name="email" placeholder="Email" required />
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-lock"></i>
+      <input type="password" name="password" placeholder="Senha" required />
+    </div>
+    
+    <button type="submit" class="btn-primary">
+      <i class="fas fa-sign-in-alt"></i> Entrar
+    </button>
+
+    <div class="form-footer">
+      <p>Não tem uma conta? <a href="/cadastro.html">Cadastre-se</a></p>
+    </div>
+
+    <div class="form-footer">
+      <p>Esqueceu a Senha? <a href="/resetar.html">Recuperar Login</a></p>
+    </div>
+    
+    <div id="errorMessage" class="error"></div>
+  </form>
+
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>

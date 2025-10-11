@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gerenciar Promoções</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/admin-promocoes.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1>
+        <i class="fas fa-tags"></i>
+        Gerenciar Promoções
+      </h1>
+      <div class="user-info">
+        <span id="userInfo">Carregando...</span>
+        <a href="caixa.html" class="btn-voltar">
+          <i class="fas fa-arrow-left"></i>
+          Voltar ao Caixa
+        </a>
+      </div>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+    <div id="successMessage" class="success-message"></div>
+
+    <!-- Modal de Confirmação de Senha -->
+    <div id="modalSenha" class="modal">
+      <div class="modal-content senha-content">
+        <div class="senha-header">
+          <i class="fas fa-lock"></i>
+          <h2>Confirmar Senha</h2>
+          <p>Digite sua senha para acessar o gerenciamento de promoções</p>
+        </div>
+        
+        <form id="formSenha" class="senha-form">
+          <div class="form-group">
+            <label for="confirmarSenha">
+              <i class="fas fa-lock"></i> Senha
+            </label>
+            <input 
+              type="password" 
+              id="confirmarSenha" 
+              class="form-control"
+              placeholder="Digite sua senha"
+              required
+            />
+          </div>
+          
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-check"></i> Confirmar
+          </button>
+        </form>
+        
+        <div id="senhaError" class="error-message" style="display: none; margin-top: 15px;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="senhaErrorText">Senha incorreta</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conteúdo Principal (aparece após confirmação da senha) -->
+    <div id="conteudoPrincipal" style="display: none;">
+      <div class="admin-content">
+        <!-- Formulário para criar promoção -->
+        <div class="section">
+          <h2><i class="fas fa-plus-circle"></i> Nova Promoção</h2>
+          <form id="formPromocao">
+            <div class="form-group">
+              <label for="produtoSelect">Produto:</label>
+              <select id="produtoSelect" class="form-control" required>
+                <option value="">Selecione um produto...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="precoPromocional">Preço Promocional (R$):</label>
+              <input type="number" id="precoPromocional" class="form-control" step="0.01" min="0.01" required>
+            </div>
+
+            <div class="form-group">
+              <label for="dataExpiracao">Data de Expiração:</label>
+              <input type="datetime-local" id="dataExpiracao" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-tag"></i>
+              Criar Promoção
+            </button>
+          </form>
+        </div>
+
+        <!-- Lista de promoções ativas -->
+        <div class="section">
+          <h2><i class="fas fa-list"></i> Promoções Ativas</h2>
+          <div id="promocoesList" class="promocoes-list">
+            <div class="loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              Carregando promoções...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-promocoes.js"></script>
+</body>
+</html>

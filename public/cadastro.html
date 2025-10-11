@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cadastro - IATech PDV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body>
+  <div class="brand">
+    <div class="logo-placeholder">
+      <i class="fas fa-cash-register"></i>
+    </div>
+    <h1> Smart Shop </h1>
+  </div>
+  
+  <form id="cadastroForm">
+    <h2>Criar Conta</h2>
+    
+    <div class="input-group">
+      <i class="fas fa-envelope"></i>
+      <input name="email" type="email" placeholder="Email" required />
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-lock"></i>
+      <input name="senha" type="password" placeholder="Senha" required minlength="6" />
+    </div>
+    
+    <div class="input-group">
+      <i class="fas fa-store"></i>
+      <input name="nomeLoja" placeholder="Nome da Loja" required />
+    </div>
+    
+    <button type="submit" id="btnCadastrar" class="btn-primary">
+      <i class="fas fa-user-plus"></i> Cadastrar
+    </button>
+
+
+    <div class="form-footer">
+      <p>Já tem uma conta? <a href="/login.html">Faça login</a></p>
+    </div>
+    
+    <div id="mensagemCadastro" class="message"></div>
+  </form>
+
+  <script type="module" src="js/cadastro.js"></script>
+</body>
+</html>

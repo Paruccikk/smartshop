@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relatórios - IATech PDV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/relatorios.css" />
+  <link rel="stylesheet" href="css/menu.css" />
+</head>
+<body>
+  <div id="menu-container"></div>
+
+  <div class="container conteudo">
+    <div id="nomeLoja" class="nome-loja"></div>
+    <h1>Relatórios</h1>
+
+    <div class="filtros">
+      <label>Pesquisar: 
+        <input type="text" id="filtroProduto" placeholder="Nome do produto ou código de barras">
+      </label>
+      <label>Data Início: <input type="date" id="dataInicio"></label>
+      <label>Data Fim: <input type="date" id="dataFim"></label>
+      <button onclick="filtrarRelatorio()">Filtrar</button>
+      <button id="btnPDF">📄 Baixar PNG</button>
+    </div>
+
+    <div class="totais">
+      <p>Total Entradas: <span id="totalEntradas">0</span></p>
+      <p>Total Saídas: <span id="totalSaidas">0</span></p>
+    </div>
+
+    <h2>Entradas (Produtos Adicionados)</h2>
+    <table id="tabelaEntradas">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Quantidade Adicionada</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Saídas (Produtos Vendidos)</h2>
+    <table id="tabelaSaidas">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Quantidade Vendida</th>
+          <th>Data</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Totais por Produto (Saídas)</h2>
+    <table id="tabelaTotaisProdutos">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Total Vendido</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="js/menu.js"></script>
+  <script>
+    fetch('menu.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('menu-container').innerHTML = html;
+        window.initMenu();
+      });
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script type="module" src="js/relatorios.js"></script>
+</body>
+</html>

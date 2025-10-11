@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title> Smart Shop </title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/caixa.css" />
+</head>
+<body>
+  <!-- Modal de Login -->
+  <div id="modalLogin" class="modal login-modal">
+    <div class="modal-content login-content">
+      <div class="login-header">
+        <i class="fas fa-cash-register"></i>
+        <h2> Smart Shop</h2>
+        <p>Faça login para continuar</p>
+      </div>
+      
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginEmail">
+            <i class="fas fa-user"></i> E-mail
+          </label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            placeholder="seu@email.com"
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="loginPassword">
+            <i class="fas fa-lock"></i> Senha
+          </label>
+          <input 
+            type="password" 
+            id="loginPassword" 
+            placeholder="Sua senha"
+            required
+          />
+        </div>
+        
+        <button type="submit" class="btn-primary login-btn">
+          <i class="fas fa-sign-in-alt"></i> Entrar no Caixa
+        </button>
+        
+        <div class="login-footer">
+          <p>Use suas credenciais do sistema IATech PDV</p>
+        </div>
+      </form>
+      
+      <div id="loginError" class="error-message" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="errorText">E-mail ou senha incorretos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal (aparece após login) -->
+  <div id="caixaContent" class="caixa-fullscreen" style="display: none;">
+    <!-- Header Simples -->
+    <div class="caixa-header">
+      <div class="header-left">
+        <h1><i class="fas fa-cash-register"></i> Smart Shop - Caixa </h1>
+        <div class="loja-info">
+          <span id="lojaNome">Minha Loja</span>
+          <span class="user-info"> | Usuário: <span id="userName">-</span></span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btnFinalizarVenda" class="btn-primary">
+          <i class="fas fa-check-circle"></i> Finalizar Compra
+        </button>
+        <button id="btnCancelarVenda" class="btn-danger">
+          <i class="fas fa-times-circle"></i> Cancelar Compra
+        </button>
+      </div>
+    </div>
+
+    <div class="caixa-container">
+      <!-- Painel de Produtos -->
+      <div class="produtos-panel">
+        <div class="search-container">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              id="searchProduto" 
+              placeholder="Buscar produto por nome ou código de barras..."
+              onkeyup="filtrarProdutos()"
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="produtos-grid" id="produtosGrid">
+          <!-- Produtos serão carregados aqui -->
+        </div>
+      </div>
+
+      <!-- Painel do Carrinho -->
+      <div class="carrinho-panel">
+        <div class="carrinho-header">
+          <h3><i class="fas fa-shopping-cart"></i> Carrinho de Compras</h3>
+          <div class="carrinho-info">
+            <span id="totalItens">0 itens</span>
+          </div>
+        </div>
+
+        <div class="carrinho-items" id="carrinhoItems">
+          <div class="carrinho-vazio">
+            <i class="fas fa-shopping-cart"></i>
+            <p>Carrinho vazio</p>
+          </div>
+        </div>
+
+        <div class="carrinho-totais">
+          <div class="total-line">
+            <span>Subtotal:</span>
+            <span id="subtotal">R$ 0,00</span>
+          </div>
+          <div class="total-line total-final">
+            <span><strong>Total:</strong></span>
+            <span id="totalVenda"><strong>R$ 0,00</strong></span>
+          </div>
+        </div>
+
+        <div class="carrinho-acoes">
+          <div class="form-group">
+            <label for="formaPagamento">Forma de Pagamento:</label>
+            <select id="formaPagamento">
+              <option value="pix">PIX</option>
+              <option value="debito">Cartão Débito</option>
+              <option value="credito">Cartão Crédito</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Finalização -->
+<div id="modalFinalizar" class="modal">
+  <div class="modal-content finalizar-content">
+    <h2><i class="fas fa-check-circle"></i> Finalizar Compra</h2>
+    
+    <div class="resumo-venda">
+      <h3>Resumo da Compra</h3>
+      <div id="resumoItens"></div>
+      <div class="total-final-modal">
+        <strong>Total: <span id="totalModal">R$ 0,00</span></strong>
+      </div>
+    </div>
+
+    <div class="selecao-pagamento">
+      <h3>Selecione a Forma de Pagamento</h3>
+      <div class="opcoes-pagamento">
+        <div class="opcao-pagamento" data-pagamento="pix">
+          <div class="icone-pagamento">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <div class="info-pagamento">
+            <span class="titulo-pagamento">PIX</span>
+            <span class="descricao-pagamento">Pagamento instantâneo</span>
+          </div>
+          <div class="check-pagamento">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+
+        <div class="opcao-pagamento" data-pagamento="debito">
+          <div class="icone-pagamento">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <div class="info-pagamento">
+            <span class="titulo-pagamento">Cartão de Débito</span>
+            <span class="descricao-pagamento">Passe na maquininha</span>
+          </div>
+          <div class="check-pagamento">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+
+        <div class="opcao-pagamento" data-pagamento="credito">
+          <div class="icone-pagamento">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <div class="info-pagamento">
+            <span class="titulo-pagamento">Cartão de Crédito</span>
+            <span class="descricao-pagamento">Passe na maquininha</span>
+          </div>
+          <div class="check-pagamento">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="instrucao-pagamento-final" id="instrucaoPagamentoFinal">
+      <div class="instrucao-content">
+        <i class="fas fa-qrcode"></i>
+        <div class="instrucao-texto">
+          <strong>Valor para pagamento:</strong>
+          <span class="valor-pagamento" id="valorPagamentoFinal">R$ 0,00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btnVoltar">
+        <i class="fas fa-arrow-left"></i> Voltar
+      </button>
+      <button class="btn-primary" id="btnConfirmarVenda">
+        <i class="fas fa-check"></i> Confirmar Compra
+      </button>
+    </div>
+  </div>
+</div>
+
+  <script type="module" src="js/caixa.js"></script>
+</body>
+</html>

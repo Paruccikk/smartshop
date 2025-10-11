@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Estoque - IATech PDV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/menu.css" />
+  <link rel="stylesheet" href="css/estoque.css" />
+</head>
+<body>
+
+<div id="menu-container"></div>
+
+<div class="main-content">
+  <div class="page-header">
+    <h1><i class="fas fa-boxes"></i> Gerenciamento de Estoque</h1>
+    <div class="acoes">
+      <button id="btnAdicionarProduto" class="btn-primary">
+        <i class="fas fa-plus-circle"></i> Adicionar Produto
+      </button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <div class="search-container">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar por nome ou código de barras..."
+          onkeyup="filtrarProdutos()"
+        />
+      </div>
+    </div>
+    
+    <button onclick="filtrar('validade')" class="btn-filter">
+      <i class="fas fa-calendar-exclamation"></i> Prestes a vencer
+    </button>
+    <button onclick="filtrar('quantidade')" class="btn-filter">
+      <i class="fas fa-exclamation-triangle"></i> Estoque baixo
+    </button>
+    <button onclick="carregarEstoque()" class="btn-filter">
+      <i class="fas fa-sync-alt"></i> Mostrar todos
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th><i class="fas fa-tag"></i> Nome</th>
+          <th><i class="fas fa-barcode"></i> Cód. Barras</th>
+          <th><i class="fas fa-box"></i> Qtd</th>
+          <th><i class="fas fa-box-open"></i> Estoque Mín.</th>
+          <th><i class="fas fa-calendar-day"></i> Validade</th>
+          <th><i class="fas fa-money-bill-wave"></i> Valor (R$)</th>
+          <th><i class="fas fa-cog"></i> Ações</th>
+        </tr>
+      </thead>
+      <tbody id="listaProdutos">
+        <tr class="loading-row">
+          <td colspan="7">
+            <i class="fas fa-spinner fa-spin"></i> Carregando estoque...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de edição -->
+  <div id="modalEdit" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeEditModal">&times;</span>
+      <h2><i class="fas fa-edit"></i> Editar Produto</h2>
+      <form id="formEditarProduto">
+        <div class="form-group">
+          <label><i class="fas fa-tag"></i> Nome</label>
+          <input type="text" name="editNome" required>
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-barcode"></i> Código de Barras</label>
+          <input type="text" name="editCodigoBarras">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-box"></i> Quantidade</label>
+            <input type="number" name="editQuantidade" required min="0">
+          </div>
+          
+          <div class="form-group">
+            <label><i class="fas fa-box-open"></i> Estoque Mínimo</label>
+            <input type="number" name="editEstoqueMinimo" required min="0">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-calendar-day"></i> Validade</label>
+          <input type="date" name="editValidade">
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-money-bill-wave"></i> Valor (R$)</label>
+          <input type="number" name="editValor" step="0.01" required>
+        </div>
+        
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i> Salvar Alterações
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de adicionar -->
+  <div id="modalAdd" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeAddModal">&times;</span>
+      <h2><i class="fas fa-plus-circle"></i> Adicionar Produto</h2>
+      <form id="formAdicionarProduto">
+        <div class="form-group">
+          <label><i class="fas fa-tag"></i> Nome</label>
+          <input type="text" id="addNome" required>
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-barcode"></i> Código de Barras</label>
+          <input type="text" id="addCodigoBarras">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-box"></i> Quantidade</label>
+            <input type="number" id="addQuantidade" required min="0">
+          </div>
+          
+          <div class="form-group">
+            <label><i class="fas fa-box-open"></i> Estoque Mínimo</label>
+            <input type="number" id="addEstoqueMinimo" required min="0">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-calendar-day"></i> Validade</label>
+          <input type="date" id="addValidade">
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fas fa-money-bill-wave"></i> Valor (R$)</label>
+          <input type="number" id="addValor" step="0.01" required>
+        </div>
+        
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-plus"></i> Adicionar Produto
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/estoque.js"></script>
+<script src="js/menu.js"></script>
+<script>
+fetch('menu.html')
+  .then(res => res.text())
+  .then(html => {
+    document.getElementById('menu-container').innerHTML = html;
+    window.initMenu();
+  })
+  .catch(err => console.error('Erro ao carregar o menu:', err));
+</script>
+</body>
+</html>

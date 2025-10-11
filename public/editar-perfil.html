@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Editar Perfil - IATech PDV</title>
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- CSS do sistema -->
+  <link rel="stylesheet" href="css/menu.css" />
+  <link rel="stylesheet" href="css/editar-perfil.css" />
+</head>
+<body>
+
+  <!-- Container do menu que será carregado via fetch -->
+  <div id="menu-container"></div>
+
+  <br /><br /><br /><br />
+
+  <!-- Conteúdo Principal -->
+  <div class="main-content">
+    <div class="profile-header">
+      <h1><i class="fas fa-store-alt"></i> Editar Perfil da Loja</h1>
+      <div class="profile-actions">
+        <button id="btnVoltar" class="btn-secondary">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulário de perfil -->
+    <div class="profile-card">
+      <form id="formPerfil">
+        <div class="form-group">
+          <label for="nomeLoja"><i class="fas fa-signature"></i> Nome da Loja</label>
+          <input type="text" id="nomeLoja" name="nomeLoja" required />
+          <i class="fas fa-store icon-input"></i>
+        </div>
+
+        <div class="form-group">
+          <label for="telefone"><i class="fas fa-phone"></i> Telefone</label>
+          <input type="tel" id="telefone" name="telefone" placeholder="(99) 99999-9999" />
+          <i class="fas fa-mobile-alt icon-input"></i>
+        </div>
+
+        <div class="form-group">
+          <label for="email"><i class="fas fa-envelope"></i> Email</label>
+          <input type="email" id="email" name="email" required />
+          <i class="fas fa-at icon-input"></i>
+        </div>
+
+        <div class="form-group">
+          <label for="senha"><i class="fas fa-lock"></i> Nova Senha</label>
+          <input type="password" id="senha" name="senha" placeholder="Deixe em branco para não alterar" minlength="6" />
+          <i class="fas fa-key icon-input"></i>
+          <small class="form-text">Mínimo de 6 caracteres</small>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Salvar Alterações
+          </button>
+        </div>
+      </form>
+
+      <div id="mensagem" class="message"></div>
+    </div>
+
+    <!-- Lista de Lojas do Usuário -->
+    <div class="user-shops">
+      <h2><i class="fas fa-store"></i> Suas Lojas</h2>
+      <ul id="listaLojas"></ul>
+      <button id="btnNovaLoja" class="btn-primary">
+        <i class="fas fa-plus-circle"></i> Criar Nova Loja
+      </button>
+    </div>
+
+    <!-- Modal de criação de nova loja -->
+    <div id="modalNovaLoja" class="modal">
+      <div class="modal-content">
+        <span class="close" id="fecharNovaLoja">&times;</span>
+        <h2>Criar Nova Loja</h2>
+        <div class="form-group">
+          <label for="nomeNovaLoja">Nome da Loja</label>
+          <input type="text" id="nomeNovaLoja" placeholder="Digite o nome da loja" />
+        </div>
+        <button id="btnSalvarNovaLoja" class="btn-primary">Salvar Loja</button>
+      </div>
+    </div>
+
+    <!-- Ações adicionais -->
+    <div class="additional-actions">
+      <button id="btnDeleteAccount" class="btn-danger">
+        <i class="fas fa-trash-alt"></i> Excluir Conta
+      </button>
+    </div>
+
+    <!-- Modal de confirmação para excluir conta -->
+    <div id="confirmDeleteModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" id="closeDeleteModal">&times;</span>
+        <h2><i class="fas fa-exclamation-triangle"></i> Confirmar Exclusão</h2>
+        <p>Tem certeza que deseja excluir sua conta permanentemente? Esta ação não pode ser desfeita.</p>
+        <div class="modal-actions">
+          <button id="confirmDelete" class="btn-danger">
+            <i class="fas fa-trash-alt"></i> Confirmar Exclusão
+          </button>
+          <button id="cancelDelete" class="btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/editar-perfil.js"></script>
+
+  <script src="js/menu.js"></script>
+  <script>
+    fetch('menu.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('menu-container').innerHTML = html;
+        window.initMenu();
+      })
+      .catch(err => console.error('Erro ao carregar o menu:', err));
+  </script>
+
+</body>
+</html>

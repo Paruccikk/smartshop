@@ -1,0 +1,234 @@
+/* cadastro.css */
+
+:root {
+  --primary: #20148c;       /* Roxo escuro principal */
+  --primary-light: #1f58a2; /* Roxo mais claro */
+  --secondary: #FFAB00;     /* Amarelo como cor secundária */
+  --light: #f5f5f5;         /* Fundo claro */
+  --dark: #212121;          /* Texto escuro */
+  --danger: #C62828;        /* Vermelho para erros */
+  --success: #2E7D32;       /* Verde para sucesso */
+  --radius: 10px;           /* Bordas arredondadas */
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Sombra padrão */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #919aee 0%, #2f2cf1c2 100%);
+  padding: 20px;
+}
+
+/* Estilos para a marca/logotipo */
+.brand {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.brand .logo-placeholder {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  background-image: url('../img/ParucciTech.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: var(--shadow);
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.brand .logo-placeholder:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.brand h1 {
+  color: var(--dark);
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos do formulário */
+#cadastroForm {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 450px;
+  transition: transform 0.3s ease;
+}
+
+#cadastroForm:hover {
+  transform: translateY(-5px);
+}
+
+#cadastroForm h2 {
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  position: relative;
+}
+
+#cadastroForm h2::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--secondary);
+  margin: 10px auto 0;
+  border-radius: 3px;
+}
+
+/* Grupos de input */
+.input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.input-group i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  border: 2px solid #e0e0e0;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.input-group input:focus {
+  border-color: var(--primary);
+  outline: none;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(74, 20, 140, 0.1);
+}
+
+/* Botão de cadastro */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(to right, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(74, 20, 140, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(74, 20, 140, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary i {
+  margin-right: 8px;
+}
+
+/* Rodapé do formulário */
+.form-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #616161;
+}
+
+.form-footer a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.form-footer a:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* Mensagens de status */
+.message {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.message.success {
+  color: var(--success);
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+.message.error {
+  color: var(--danger);
+  background-color: rgba(198, 40, 40, 0.1);
+}
+
+/* Animações */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  body {
+    padding: 15px;
+  }
+  
+  #cadastroForm {
+    padding: 2rem 1.5rem;
+  }
+  
+  .brand .logo-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .brand h1 {
+    font-size: 1.8rem;
+  }
+  
+  .input-group input {
+    padding: 12px 12px 12px 40px;
+  }
+}

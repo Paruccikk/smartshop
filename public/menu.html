@@ -1,0 +1,35 @@
+<!-- menu.html -->
+<header class="main-header">
+  <div class="header-container">
+    <a href="index.html" class="header-brand">
+      <i class="fas fa-cash-register"></i>
+      <span class="brand"> Smart Shop </span>
+      <span id="loja-info" class="loja-name">Carregando loja...</span>
+    </a>
+
+    <button id="menu-toggle" class="hamburger-menu" aria-label="Abrir menu">
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+    </button>
+
+    <nav class="header-nav">
+      <ul class="nav-menu">
+        <li><a href="painel.html"><i class="fas fa-tachometer-alt"></i> Painel</a></li>
+        <li><a href="estoque.html"><i class="fas fa-boxes"></i> Estoque</a></li>
+        <li><a href="relatorios.html"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+        <li><a href="editar-perfil.html"><i class="fas fa-cog"></i> Configurações</a></li>
+        <li><a href="admin-promocoes.html"><i class="fas fa-cash-register"></i> Promoções </a></li>
+        <li><a href="caixa.html"><i class="fas fa-cash-register"></i> Caixa</a></li>
+        <li id="admin-menu-item" style="display:none;">
+          <a href="admin.html"><i class="fas fa-user-shield"></i> Administração</a>
+        </li>
+        <li>
+          <a href="login.html" onclick="logout()" class="logout-btn" title="Sair" aria-label="Sair do sistema">
+            <i class="fas fa-sign-out-alt"></i> Sair
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>

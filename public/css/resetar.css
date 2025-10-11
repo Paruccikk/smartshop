@@ -1,0 +1,116 @@
+/* resetar.css */
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #5f2c82, #49a09d);
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.reset-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.reset-card h1 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.reset-card p {
+  color: #555;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.reset-card input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  transition: 0.3s;
+}
+
+.reset-card input:focus {
+  border-color: #5f2c82;
+  outline: none;
+  box-shadow: 0 0 4px rgba(95, 44, 130, 0.3);
+}
+
+.reset-card button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #5f2c82, #49a09d);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.reset-card button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+}
+
+#msg {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.voltar {
+  display: inline-block;
+  margin-top: 20px;
+  text-decoration: none;
+  color: #5f2c82;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.voltar:hover {
+  text-decoration: underline;
+  color: #3b1e56;
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+  .reset-card {
+    padding: 30px 20px;
+  }
+
+  .reset-card h1 {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel Admin - IATech PDV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div id="menu-container"></div>
+
+  <div class="container conteudo">
+    <h1>Painel de Administração</h1>
+
+    <!-- Filtros globais -->
+    <div class="filtros-globais">
+      <button id="filtroUsuariosPendentes">Usuários Pendentes</button>
+      <button id="filtroLojasPendentes">Lojas Pendentes</button>
+      <button id="filtroTodos">Todos</button>
+    </div>
+
+    <!-- Pesquisa -->
+    <div class="topo-admin">
+      <input type="text" id="pesquisa" placeholder="Pesquisar por loja, email ou telefone...">
+      <button id="btnAdicionar"><i class="fas fa-user-plus"></i> Adicionar Usuário</button>
+    </div>
+
+    <!-- Filtros por período -->
+    <div class="filtros-vendas">
+      <label for="dataInicio">De:</label>
+      <input type="date" id="dataInicio">
+
+      <label for="dataFim">Até:</label>
+      <input type="date" id="dataFim">
+
+      <button id="btnFiltrar">Filtrar</button>
+      <button id="btnLimparFiltro">Limpar Filtro</button>
+    </div>
+
+    <!-- Tabela de Usuários -->
+    <table id="tabelaUsuarios">
+      <thead>
+        <tr>
+          <th>Loja</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Vendas Totais (R$)</th>
+          <th>Aprovado</th>
+          <th>Admin</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Tabela de Lojas Pendentes -->
+    <h2>Lojas Pendentes de Aprovação</h2>
+    <table id="tabelaLojas">
+      <thead>
+        <tr>
+          <th>Nome da Loja</th>
+          <th>Proprietário</th>
+          <th>Telefone</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Modal de edição de usuário -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <span id="fecharModal" class="close">&times;</span>
+      <h2>Editar Usuário</h2>
+      <label>Nome da Loja:</label>
+      <input type="text" id="editNomeLoja">
+
+      <label>Email:</label>
+      <input type="email" id="editEmail">
+
+      <label>Telefone:</label>
+      <input type="text" id="editTelefone">
+
+      <label>Aprovado:</label>
+      <select id="editAprovado">
+        <option value="true">Sim</option>
+        <option value="false">Não</option>
+      </select>
+
+      <label>Admin:</label>
+      <select id="editAdmin">
+        <option value="true">Sim</option>
+        <option value="false">Não</option>
+      </select>
+
+      <button id="salvarEdicao">Salvar</button>
+    </div>
+  </div>
+
+  <script src="js/menu.js"></script>
+  <script>
+    fetch('menu.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('menu-container').innerHTML = html;
+        window.initMenu();
+      });
+  </script>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
