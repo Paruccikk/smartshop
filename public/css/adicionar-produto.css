@@ -74,3 +74,193 @@ button:hover, #btnScan:hover {
 #btnCloseScanner:hover {
   background: #d32f2f;
 }
+
+
+/* ===== estilos para campos de categoria no formulário de adicionar produto ===== */
+form#formProduto label {
+  display: block;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #222;
+}
+
+form#formProduto select,
+form#formProduto input[type="text"],
+form#formProduto input[type="number"],
+form#formProduto input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 15px;
+  color: #222;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+form#formProduto select:focus,
+form#formProduto input[type="text"]:focus,
+form#formProduto input[type="number"]:focus,
+form#formProduto input[type="date"]:focus {
+  outline: none;
+  border-color: #6aa0ff;
+  box-shadow: 0 4px 14px rgba(106,160,255,0.12);
+}
+
+form#formProduto select[disabled] {
+  background: #f5f5f5;
+  color: #777;
+  cursor: not-allowed;
+}
+
+/* botão submit */
+form#formProduto button[type="submit"] {
+  margin-top: 18px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg,#2b7cff,#1b5fd6);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* mensagem de sucesso/erro */
+#mensagem {
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+@media (min-width: 760px) {
+  form#formProduto {
+    max-width: 520px;
+  }
+}
+
+/* ===== COMMON: selects e inputs de categoria ===== */
+.select-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.select-wrapper select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 1px solid #e0e6ef;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1f2937;
+  box-sizing: border-box;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  cursor: pointer;
+}
+
+.select-wrapper select:focus {
+  outline: none;
+  border-color: #4f9cff;
+  box-shadow: 0 6px 20px rgba(79,156,255,0.12);
+}
+
+.select-wrapper .select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* disabled state */
+.select-wrapper select[disabled] {
+  background: #f7f8fb;
+  color: #8b919a;
+  cursor: not-allowed;
+}
+
+/* text inputs (nova categoria) */
+input.nova-categoria,
+input#novaCategoria,
+input#addNovaCategoria,
+input#editNovaCategoria {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e6ef;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 15px;
+  color: #111827;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+input.nova-categoria:focus,
+input#novaCategoria:focus,
+input#addNovaCategoria:focus,
+input#editNovaCategoria:focus {
+  outline: none;
+  border-color: #4f9cff;
+  box-shadow: 0 6px 20px rgba(79,156,255,0.12);
+}
+
+/* ===== listas / badges de categoria ===== */
+.categoria-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+/* mostrações na tabela (coluna de categoria) */
+table thead th:nth-child(2),
+table tbody td:nth-child(2) {
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+/* se quiser exibir o nome da categoria como badge dentro da célula */
+td .categoria-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== botão limpar / estado visual ===== */
+.form-row .form-group .help {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+/* botão submit e botões leves */
+.btn-primary {
+  background: linear-gradient(180deg,#2b7cff,#1b5fd6);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* responsividade */
+@media (min-width: 760px) {
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+/* ===== detalhes visuais menores ===== */
+select option {
+  padding: 6px 8px;
+}

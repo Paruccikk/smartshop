@@ -33,6 +33,19 @@
     <label for="estoqueMinimo">Estoque Mínimo</label>
     <input type="number" id="estoqueMinimo" name="estoqueMinimo" placeholder="Quantidade mínima" required />
 
+    <!-- Categoria (wrapper + seta) -->
+    <label for="categoria">Categoria</label>
+    <div class="select-wrapper">
+      <select id="categoria" name="categoria">
+        <option value="">-- Selecionar categoria --</option>
+        <!-- options serão preenchidas por JS -->
+      </select>
+      <span class="select-arrow">▾</span>
+    </div>
+
+    <label for="novaCategoria">Ou crie nova categoria</label>
+    <input type="text" id="novaCategoria" name="novaCategoria" placeholder="Nova categoria (opcional)" class="nova-categoria" />
+
     <button type="submit">Adicionar Produto</button>
   </form>
 

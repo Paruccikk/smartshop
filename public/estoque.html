@@ -34,6 +34,17 @@
         />
       </div>
     </div>
+
+    <!-- filtro de categoria (com wrapper para seta e estilo) -->
+    <div class="filtro-categoria">
+      <label class="sr-only" for="filtroCategoria">Filtrar por categoria</label>
+      <div class="select-wrapper">
+        <select id="filtroCategoria" onchange="filtrarProdutos()">
+          <option value="">Todas as categorias</option>
+        </select>
+        <span class="select-arrow">▾</span>
+      </div>
+    </div>
     
     <button onclick="filtrar('validade')" class="btn-filter">
       <i class="fas fa-calendar-exclamation"></i> Prestes a vencer
@@ -51,6 +62,7 @@
       <thead>
         <tr>
           <th><i class="fas fa-tag"></i> Nome</th>
+          <th><i class="fas fa-layer-group"></i> Categoria</th>
           <th><i class="fas fa-barcode"></i> Cód. Barras</th>
           <th><i class="fas fa-box"></i> Qtd</th>
           <th><i class="fas fa-box-open"></i> Estoque Mín.</th>
@@ -61,7 +73,7 @@
       </thead>
       <tbody id="listaProdutos">
         <tr class="loading-row">
-          <td colspan="7">
+          <td colspan="8">
             <i class="fas fa-spinner fa-spin"></i> Carregando estoque...
           </td>
         </tr>
@@ -78,6 +90,19 @@
         <div class="form-group">
           <label><i class="fas fa-tag"></i> Nome</label>
           <input type="text" name="editNome" required>
+        </div>
+
+        <!-- categoria no editar (com wrapper) -->
+        <div class="form-group">
+          <label><i class="fas fa-layer-group"></i> Categoria</label>
+          <div class="select-wrapper">
+            <select id="editCategoria" name="editCategoria"></select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ou crie nova categoria</label>
+          <input type="text" id="editNovaCategoria" name="editNovaCategoria" placeholder="Nova categoria (opcional)" class="nova-categoria">
         </div>
         
         <div class="form-group">
@@ -123,6 +148,19 @@
         <div class="form-group">
           <label><i class="fas fa-tag"></i> Nome</label>
           <input type="text" id="addNome" required>
+        </div>
+
+        <!-- categoria no adicionar (com wrapper) -->
+        <div class="form-group">
+          <label><i class="fas fa-layer-group"></i> Categoria</label>
+          <div class="select-wrapper">
+            <select id="addCategoria" name="addCategoria"></select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ou crie nova categoria</label>
+          <input type="text" id="addNovaCategoria" name="addNovaCategoria" placeholder="Nova categoria (opcional)" class="nova-categoria">
         </div>
         
         <div class="form-group">

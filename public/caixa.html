@@ -1,360 +1,217 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="format-detection" content="telephone=no">
-  <title>Smart Shop</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="css/caixa.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop - Sistema de Caixa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/caixa.css">
 </head>
-
 <body>
-  <!-- Modal de Login -->
-  <div id="modalLogin" class="modal login-modal">
-    <div class="modal-content login-content">
-      <div class="login-header">
-        <i class="fas fa-cash-register"></i>
-        <h2>Smart Shop</h2>
-        <p>Faça login para continuar</p>
-      </div>
-      
-      <form id="loginForm" class="login-form">
-        <div class="form-group">
-          <label for="loginEmail">
-            <i class="fas fa-user"></i> E-mail
-          </label>
-          <input 
-            type="email" 
-            id="loginEmail" 
-            placeholder="seu@email.com"
-            required
-          />
+    <!-- Modal de Login -->
+    <div id="modalLogin" class="modal">
+        <div class="modal-content login-modal">
+            <div class="login-header">
+                <h2><i class="fas fa-cash-register"></i> Smart Shop</h2>
+                <p>Sistema de Caixa</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginEmail"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fas fa-lock"></i> Senha</label>
+                    <input type="password" id="loginPassword" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+                <div id="loginError" class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="errorText"></span>
+                </div>
+            </form>
         </div>
-        
-        <div class="form-group">
-          <label for="loginPassword">
-            <i class="fas fa-lock"></i> Senha
-          </label>
-          <input 
-            type="password" 
-            id="loginPassword" 
-            placeholder="Sua senha"
-            required
-          />
-        </div>
-        
-        <button type="submit" class="btn-primary login-btn">
-          <i class="fas fa-sign-in-alt"></i> Entrar no Caixa
-        </button>
-        
-        <div class="login-footer">
-          <p>Use suas credenciais do sistema Smart Shop </p>
-        </div>
-      </form>
-      
-      <div id="loginError" class="error-message" style="display: none;">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span id="errorText">E-mail ou senha incorretos</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Conteúdo Principal (aparece após login) -->
-  <div id="caixaContent" class="caixa-fullscreen" style="display: none;">
-    <!-- Header Simples -->
-    <div class="caixa-header">
-      <div class="header-left">
-        <h1><i class="fas fa-cash-register"></i> -   Smart Shop </h1>
-        <div class="loja-info">
-          <span id="lojaNome">Minha Loja</span>
-          <span class="user-info"> | Usuário: <span id="userName">-</span></span>
-        </div>
-      </div>
-      <div class="header-right">
-        <button id="btnFinalizarVenda" class="btn-primary">
-          <i class="fas fa-check-circle"></i> Finalizar Compra
-        </button>
-        <button id="btnCancelarVenda" class="btn-danger">
-          <i class="fas fa-times-circle"></i> Cancelar Compra
-        </button>
-      </div>
     </div>
 
-    <div class="caixa-container">
-      <!-- Painel de Produtos -->
-      <div class="produtos-panel">
-        <div class="search-container">
-          <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input 
-              type="text" 
-              id="campoBusca" 
-              class="search-input"
-              placeholder="Escaneie o código ou digite o nome do produto"
-              autofocus
-              autocomplete="off"
-            />
-          </div>
+    <!-- Conteúdo Principal do Caixa -->
+    <div id="caixaContent" class="caixa-container">
+        <!-- Header -->
+        <header class="caixa-header">
+            <div class="header-left">
+                <h1><i class="fas fa-store"></i> <span id="lojaNome">Smart Shop</span></h1>
+                <div class="user-info">
+                    <span id="userName">Usuário</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="search-container">
+                    <input type="text" id="campoBusca" placeholder="Buscar produto ou código de barras...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="carrinho-info">
+                    <div class="total-itens" id="totalItens">0 itens</div>
+                    <div class="total-venda" id="totalVenda">R$ 0,00</div>
+                </div>
+            </div>
+        </header>
 
-          <!-- INPUT ESCONDIDO PARA SCANNER (focável) -->
-          <input
-            id="scannerInput"
-            type="text"
-            inputmode="none"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-            class="scanner-hidden-input"
-            tabindex="0"
-            aria-hidden="true"
-          />
+        <!-- Área Principal -->
+        <main class="caixa-main">
+            <!-- Produtos -->
+            <section class="produtos-section">
+                <div id="produtosGrid" class="produtos-grid">
+                    <!-- Produtos serão carregados aqui -->
+                </div>
+            </section>
 
-          <div id="resultados" class="resultados-container"></div>
-        </div>
+            <!-- Carrinho (Desktop) -->
+            <aside class="carrinho-sidebar">
+                <div class="carrinho-header">
+                    <h3><i class="fas fa-shopping-cart"></i> Carrinho</h3>
+                    <div class="subtotal" id="subtotal">R$ 0,00</div>
+                </div>
+                <div class="carrinho-items" id="carrinhoItems">
+                    <!-- Itens do carrinho serão carregados aqui -->
+                </div>
+                <div class="carrinho-footer">
+                    <div class="total-final">
+                        <span>Total:</span>
+                        <span id="totalVendaDesktop">R$ 0,00</span>
+                    </div>
+                    <div class="carrinho-actions">
+                        <button id="btnFinalizarVenda" class="btn-primary" disabled>
+                            <i class="fas fa-credit-card"></i> Finalizar Venda
+                        </button>
+                        <button id="btnCancelarVenda" class="btn-danger">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </main>
 
-        <div class="produtos-grid" id="produtosGrid">
-          <!-- Produtos serão carregados aqui -->
-        </div>
-      </div>
-
-      <!-- Painel do Carrinho (Desktop) -->
-      <div class="carrinho-panel carrinho-desktop">
-        <div class="carrinho-header">
-          <h3><i class="fas fa-shopping-cart"></i> Carrinho de Compras</h3>
-          <div class="carrinho-info">
-            <span id="totalItens">0 itens</span>
-          </div>
-        </div>
-
-        <div class="carrinho-items" id="carrinhoItems">
-          <div class="carrinho-vazio">
+        <!-- Botão Carrinho Mobile -->
+        <div class="carrinho-mobile-btn" id="btnAbrirCarrinho">
+            <div class="carrinho-badge" id="carrinhoBadge">0</div>
             <i class="fas fa-shopping-cart"></i>
-            <p>Carrinho vazio</p>
-          </div>
+            <span class="carrinho-total" id="carrinhoTotalMobile">R$ 0,00</span>
         </div>
 
-        <div class="carrinho-totais">
-          <div class="total-line">
-            <span>Subtotal:</span>
-            <span id="subtotal">R$ 0,00</span>
-          </div>
-          <div class="total-line total-final">
-            <span><strong>Total:</strong></span>
-            <span id="totalVenda"><strong>R$ 0,00</strong></span>
-          </div>
-        </div>
-
-        <div class="carrinho-acoes">
-          <div class="form-group">
-            <label for="formaPagamento">Forma de Pagamento:</label>
-            <select id="formaPagamento" class="form-control">
-              <option value="pix">PIX</option>
-              <option value="debito">Cartão Débito</option>
-              <option value="credito">Cartão Crédito</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Botão Flutuante do Carrinho (Mobile) -->
-      <div class="carrinho-flutuante" id="carrinhoFlutuante">
-        <button class="btn-carrinho-toggle" id="btnAbrirCarrinho" aria-label="Abrir carrinho">
-          <i class="fas fa-shopping-cart"></i>
-          <span class="carrinho-badge" id="carrinhoBadge" style="display:none">0</span>
-          <span class="carrinho-total-mobile" id="carrinhoTotalMobile">R$ 0,00</span>
-        </button>
-      </div>
-
-      <!-- Modal do Carrinho (Mobile) -->
-      <div id="modalCarrinho" class="modal modal-carrinho" style="display:none;">
-        <div class="modal-content carrinho-modal-content">
-          <div class="carrinho-modal-header">
-            <h3>
-              <i class="fas fa-shopping-cart"></i>
-              Carrinho de Compras
-              <span class="carrinho-modal-count" id="carrinhoModalCount">(0 itens)</span>
-            </h3>
-            <button class="btn-fechar-carrinho" id="btnFecharCarrinho" aria-label="Fechar carrinho">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="carrinho-modal-items" id="carrinhoModalItems">
-            <div class="carrinho-vazio">
-              <i class="fas fa-shopping-cart"></i>
-              <p>Carrinho vazio</p>
-            </div>
-          </div>
-
-          <div class="carrinho-modal-totais">
-            <div class="total-line">
-              <span>Subtotal:</span>
-              <span id="subtotalModal">R$ 0,00</span>
-            </div>
-            <div class="total-line total-final">
-              <span><strong>Total:</strong></span>
-              <span id="totalVendaModal"><strong>R$ 0,00</strong></span>
-            </div>
-          </div>
-            
-            <div class="botoes-acoes">
-              <button id="btnCancelarVendaMobile" class="btn-danger">
-                <i class="fas fa-times-circle"></i> Cancelar
-              </button>
-              <button id="btnFinalizarVendaMobile" class="btn-primary">
-                <i class="fas fa-check-circle"></i> Finalizar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        <!-- Input Scanner (Escondido) -->
+        <input type="text" id="scannerInput" class="scanner-input" autocomplete="off">
     </div>
-  </div>
 
-  <!-- Modal de Finalização -->
-  <div id="modalFinalizar" class="modal">
-    <div class="modal-content finalizar-content">
-      <h2><i class="fas fa-check-circle"></i> Finalizar Compra</h2>
-      
-      <div class="resumo-venda">
-        <h3>Resumo da Compra</h3>
-        <div id="resumoItens"></div>
-        <div class="total-final-modal">
-          <strong>Total: <span id="totalModal">R$ 0,00</span></strong>
+    <!-- Modal Finalizar Venda -->
+    <div id="modalFinalizar" class="modal">
+        <div class="modal-content finalizar-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-credit-card"></i> Finalizar Venda</h3>
+                <button id="btnVoltar" class="btn-close">&times;</button>
+            </div>
+            <div class="resumo-venda">
+                <h4>Resumo da Venda</h4>
+                <div class="resumo-itens" id="resumoItens">
+                    <!-- Itens do resumo serão carregados aqui -->
+                </div>
+                <div class="resumo-total">
+                    <span>Total:</span>
+                    <span id="totalModal">R$ 0,00</span>
+                </div>
+            </div>
+            <div class="pagamento-section">
+                <h4>Forma de Pagamento</h4>
+                <div class="opcoes-pagamento">
+                    <div class="opcao-pagamento selecionada" data-pagamento="pix">
+                        <i class="fas fa-qrcode"></i>
+                        <span>PIX</span>
+                    </div>
+                    <div class="opcao-pagamento" data-pagamento="credito">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Cartão Crédito</span>
+                    </div>
+                    <div class="opcao-pagamento" data-pagamento="debito">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Cartão Débito</span>
+                    </div>
+                    <div class="opcao-pagamento" data-pagamento="dinheiro">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Dinheiro</span>
+                    </div>
+                </div>
+                <div class="instrucao-pagamento" id="instrucaoPagamentoFinal">
+                    <p>Valor a pagar: <strong id="valorPagamentoFinal">R$ 0,00</strong></p>
+                    <div class="instrucao-pix" style="display: none;">
+                        <p>Apresente o QR Code para o cliente</p>
+                    </div>
+                    <div class="instrucao-cartao" style="display: none;">
+                        <p>Insira/aponte o cartão na maquininha</p>
+                    </div>
+                    <div class="instrucao-dinheiro" style="display: none;">
+                        <p>Informe o valor recebido</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="btnConfirmarVenda" class="btn-primary">
+                    <i class="fas fa-check"></i> Confirmar Pagamento
+                </button>
+            </div>
         </div>
-      </div>
-
-      <div class="selecao-pagamento">
-        <h3>Selecione a Forma de Pagamento</h3>
-        <div class="opcoes-pagamento">
-          <div class="opcao-pagamento" data-pagamento="pix">
-            <div class="icone-pagamento">
-              <i class="fas fa-qrcode"></i>
-            </div>
-            <div class="info-pagamento">
-              <span class="titulo-pagamento">PIX</span>
-              <span class="descricao-pagamento">Pagamento instantâneo</span>
-            </div>
-            <div class="check-pagamento">
-              <i class="fas fa-check"></i>
-            </div>
-          </div>
-
-          <div class="opcao-pagamento" data-pagamento="debito">
-            <div class="icone-pagamento">
-              <i class="fas fa-credit-card"></i>
-            </div>
-            <div class="info-pagamento">
-              <span class="titulo-pagamento">Cartão de Débito</span>
-              <span class="descricao-pagamento">Passe na maquininha</span>
-            </div>
-            <div class="check-pagamento">
-              <i class="fas fa-check"></i>
-            </div>
-          </div>
-
-          <div class="opcao-pagamento" data-pagamento="credito">
-            <div class="icone-pagamento">
-              <i class="fas fa-credit-card"></i>
-            </div>
-            <div class="info-pagamento">
-              <span class="titulo-pagamento">Cartão de Crédito</span>
-              <span class="descricao-pagamento">Passe na maquininha</span>
-            </div>
-            <div class="check-pagamento">
-              <i class="fas fa-check"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="instrucao-pagamento-final" id="instrucaoPagamentoFinal">
-        <div class="instrucao-content">
-          <i class="fas fa-qrcode"></i>
-          <div class="instrucao-texto">
-            <strong>Valor para pagamento:</strong>
-            <span class="valor-pagamento" id="valorPagamentoFinal">R$ 0,00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-secondary" id="btnVoltar">
-          <i class="fas fa-arrow-left"></i> Voltar
-        </button>
-        <button class="btn-primary" id="btnConfirmarVenda">
-          <i class="fas fa-check"></i> Confirmar Compra
-        </button>
-      </div>
     </div>
-  </div>
 
-  <!-- Scripts WebView (adicionar antes do seu caixa.js) -->
-  <script src="js/webview-detector.js"></script>
-  <script src="js/fullscreen-helper.js"></script>
-  <script src="js/android-interface.js"></script>
-  <script src="js/app-main.js"></script>
+    <!-- Modal Carrinho Mobile -->
+    <div id="modalCarrinho" class="modal mobile-modal">
+        <div class="modal-content carrinho-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-shopping-cart"></i> Carrinho <span id="carrinhoModalCount">(0 itens)</span></h3>
+                <button id="btnFecharCarrinho" class="btn-close">&times;</button>
+            </div>
+            <div class="carrinho-modal-items" id="carrinhoModalItems">
+                <!-- Itens do carrinho mobile serão carregados aqui -->
+            </div>
+            <div class="carrinho-modal-footer">
+                <div class="carrinho-modal-totals">
+                    <div class="carrinho-modal-subtotal">
+                        <span>Subtotal:</span>
+                        <span id="subtotalModal">R$ 0,00</span>
+                    </div>
+                    <div class="carrinho-modal-total">
+                        <span>Total:</span>
+                        <span id="totalVendaModal">R$ 0,00</span>
+                    </div>
+                </div>
+                <div class="carrinho-modal-actions">
+                    <button id="btnFinalizarVendaMobile" class="btn-primary">
+                        <i class="fas fa-credit-card"></i> Finalizar Venda
+                    </button>
+                    <button id="btnCancelarVendaMobile" class="btn-danger">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <!-- Seu script principal -->
-  <script type="module" src="js/caixa.js"></script>
+    <!-- Modal Customizado (Interno) -->
+    <div id="customModal" class="custom-modal" style="display:none;">
+        <div class="custom-modal-content">
+            <p id="customModalMessage"></p>
+            <div class="custom-modal-buttons">
+                <button id="customModalConfirm" class="btn-primary">Confirmar</button>
+                <button id="customModalCancel" class="btn-danger">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
-  <!-- Script para inicialização WebView -->
-  <script>
-    // Inicializar quando o DOM estiver pronto
-    document.addEventListener('DOMContentLoaded', function() {
-        // Garantir que o body tenha as classes do WebView
-        if (typeof webViewDetector !== 'undefined' && webViewDetector.isWebViewEnvironment()) {
-            document.body.classList.add('webview-body');
-            document.documentElement.classList.add('webview-environment');
-            
-            // Configurar botão voltar do Android
-            if (typeof fullscreenHelper !== 'undefined') {
-                fullscreenHelper.setupBackButton(function() {
-                    // Lógica customizada para o botão voltar no seu app
-                    if (document.getElementById('modalFinalizar').style.display === 'block') {
-                        // Se estiver no modal de finalização, voltar para o caixa
-                        document.getElementById('modalFinalizar').style.display = 'none';
-                    } else if (document.getElementById('modalCarrinho').style.display === 'block') {
-                        // Se estiver no carrinho mobile, fechar
-                        document.getElementById('modalCarrinho').style.display = 'none';
-                    } else {
-                        // Senão, usar comportamento padrão
-                        fullscreenHelper.handleBackButton();
-                    }
-                });
-            }
+    <!-- Container para Toasts -->
+    <div id="toastContainer"></div>
 
-            // Enviar mensagem para o app informando que está pronto
-            if (typeof androidInterface !== 'undefined') {
-                setTimeout(() => {
-                    androidInterface.sendToApp({ 
-                        action: 'appReady',
-                        page: 'caixa',
-                        timestamp: new Date().toISOString()
-                    });
-                }, 1000);
-            }
-        }
-
-        // Forçar fullscreen em qualquer interação (fallback)
-        document.addEventListener('click', function() {
-            if (typeof fullscreenHelper !== 'undefined') {
-                fullscreenHelper.enterFullscreen();
-            }
-        });
-    });
-
-    // Fallback para fullscreen se os scripts não carregarem
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen().catch(e => console.log('Fullscreen fallback error:', e));
-            }
-        }, 500);
-    });
-  </script>
+    <!-- Scripts -->
+    <script type="module" src="js/caixa.js"></script>
+    <script type="module" src="js/produtos.js"></script>
+    <script type="module" src="js/carrinho.js"></script>
+    <script type="module" src="js/pagamento.js"></script>
 </body>
 </html>
