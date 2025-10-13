@@ -201,26 +201,7 @@ body {
     gap: 2rem;
 }
 
-.search-container {
-    position: relative;
-    width: 300px;
-}
-
-.search-container input {
-    width: 100%;
-    padding: 10px 40px 10px 16px;
-    border: 2px solid var(--gray-light);
-    border-radius: var(--border-radius);
-    font-size: 0.9rem;
-}
-
-.search-container i {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--gray);
-}
+/* REMOVIDO: Estilos do search-container */
 
 .carrinho-info {
     text-align: right;
@@ -974,12 +955,16 @@ body {
     transition: var(--transition);
 }
 
-/* Input Scanner */
+/* Input Scanner - OTIMIZADO PARA GERTECK */
 .scanner-input {
     position: absolute;
     left: -1000px;
     opacity: 0;
     pointer-events: none;
+    width: 0;
+    height: 0;
+    border: none;
+    background: transparent;
 }
 
 /* Toast */
@@ -1008,12 +993,7 @@ body {
     
     .header-right {
         flex: 1;
-        justify-content: space-between;
-    }
-    
-    .search-container {
-        flex: 1;
-        max-width: 400px;
+        justify-content: flex-end;
     }
 }
 
@@ -1058,9 +1038,4 @@ body {
     .categorias-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
-    
-    .search-container {
-        width: 100%;
-    }
 }
-

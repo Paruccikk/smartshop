@@ -1,4 +1,4 @@
-// caixa.js - principal (atualizado: modais internos + persistência fullscreen + correção totais)
+// caixa.js - principal (otimizado para Gerteck SK210 - sem teclado)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -12,7 +12,7 @@ import * as produtosModule from "./produtos.js";
 import * as carrinhoModule from "./carrinho.js";
 import { confirmarVenda as pagamentoConfirmarVenda } from "./pagamento.js";
 
-// Config Firebase (mesmos dados do arquivo original)
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCF2xMRCG8GhGYdMFncB_hPaUHApM7fpRc",
   authDomain: "iatech-aca5f.firebaseapp.com",
@@ -32,16 +32,16 @@ let lojaId = null;
 let usuarioLogado = null;
 let formaPagamentoSelecionada = 'pix';
 
-// elementos DOM (serão inicializados)
+// elementos DOM
 let modalLogin, caixaContent, loginForm, loginError, errorText;
 let lojaNome, userName, btnLogout;
 let totalItens, subtotalElement, totalVendaElement, totalVendaDesktop;
 let modalFinalizar, resumoItens, totalModal, valorPagamentoFinal;
 let btnConfirmarVenda, btnVoltar, btnFinalizarVenda, btnCancelarVenda;
-let campoBuscaElement, scannerInputElement;
+let scannerInputElement;
 let modalCarrinho, btnAbrirCarrinho, btnFecharCarrinho, carrinhoModalItems, carrinhoBadge, carrinhoTotalMobile, carrinhoModalCount, subtotalModal, totalVendaModal, btnFinalizarVendaMobile, btnCancelarVendaMobile;
 
-// ------------- MODAL INTERNO (tema do sistema, não sai da fullscreen) -------------
+// Modal Interno
 function _getCustomModalEls() {
   return {
     modal: document.getElementById('customModal'),
@@ -51,7 +51,6 @@ function _getCustomModalEls() {
   };
 }
 
-// mostra confirmação (true / false)
 export async function mostrarConfirmacao(mensagem) {
   const { modal, messageEl, btnConfirm, btnCancel } = _getCustomModalEls();
   if (!modal || !messageEl || !btnConfirm || !btnCancel) {
@@ -85,7 +84,6 @@ export async function mostrarConfirmacao(mensagem) {
   });
 }
 
-// mostra alerta simples (apenas OK)
 export async function mostrarAlerta(mensagem) {
   const { modal, messageEl, btnConfirm, btnCancel } = _getCustomModalEls();
   if (!modal || !messageEl || !btnConfirm) {
@@ -115,10 +113,9 @@ export async function mostrarAlerta(mensagem) {
   });
 }
 
-// Compat layer: exportar nomes antigos usados por outros módulos
 export { mostrarConfirmacao as confirmDialog, mostrarAlerta as alertDialog };
 
-// ------------- fullscreen persistence -------------
+// Fullscreen persistence (mantido)
 let _fullscreenRetryInterval = null;
 let _fullscreenRetryCount = 0;
 const FULLSCREEN_RETRY_MAX = 6;
@@ -130,7 +127,7 @@ function tryEnterFullscreen() {
       fullscreenHelper.enterFullscreen();
       return;
     }
-  } catch (e) { /* ignora */ }
+  } catch (e) { }
 
   const el = document.documentElement;
   if (el.requestFullscreen) {
@@ -151,7 +148,6 @@ function startFullscreenWatcher() {
       if (_fullscreenRetryCount < FULLSCREEN_RETRY_MAX) {
         tryEnterFullscreen();
         _fullscreenRetryCount++;
-        console.warn('Tentando reentrar em fullscreen (tentativa', _fullscreenRetryCount, ')');
       }
     } else {
       _fullscreenRetryCount = 0;
@@ -175,9 +171,7 @@ document.addEventListener('fullscreenchange', () => {
 
 startFullscreenWatcher();
 
-// ------------- restante do caixa.js (inicialização + listeners) -------------
-
-// Inicializa todos os elementos do DOM (única função)
+// Inicialização do DOM
 function inicializarElementosDOM() {
   modalLogin = document.getElementById('modalLogin');
   caixaContent = document.getElementById('caixaContent');
@@ -209,8 +203,7 @@ function inicializarElementosDOM() {
   btnFinalizarVenda = document.getElementById('btnFinalizarVenda');
   btnCancelarVenda = document.getElementById('btnCancelarVenda');
 
-  // campo busca e scanner escondido
-  campoBuscaElement = document.getElementById('campoBusca');
+  // scanner escondido (OTIMIZADO PARA GERTECK)
   scannerInputElement = document.getElementById('scannerInput');
 
   // carrinho mobile
@@ -226,33 +219,11 @@ function inicializarElementosDOM() {
   btnFinalizarVendaMobile = document.getElementById('btnFinalizarVendaMobile');
   btnCancelarVendaMobile = document.getElementById('btnCancelarVendaMobile');
 
-  // aplica proteções para campo visível (não abrir teclado)
-  if (campoBuscaElement) {
-    try {
-      campoBuscaElement.readOnly = true;
-      campoBuscaElement.tabIndex = -1;
-      campoBuscaElement.addEventListener('focus', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
-      campoBuscaElement.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
-      campoBuscaElement.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (scannerInputElement) scannerInputElement.focus();
-      }, { passive: true });
-    } catch (err) {
-      console.warn('Não foi possível aplicar readOnly ao campo visível', err);
-    }
-  }
-
   configurarEventListeners();
   inicializarCarrinhoMobile();
 }
 
-// Event listeners (único lugar)
+// Event listeners
 function configurarEventListeners() {
   // login
   if (loginForm) {
@@ -365,7 +336,7 @@ function configurarEventListeners() {
   });
 }
 
-// auth state
+// Auth state (mantido)
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
@@ -381,7 +352,6 @@ onAuthStateChanged(auth, async (user) => {
         };
         lojaId = userData.lojaId;
 
-        // inicializa módulos que precisam de db/lojaId
         produtosModule.init({ db, getLojaId: () => lojaId });
         produtosModule.setProdutoClickCallback((produto) => {
           carrinhoModule.adicionarAoCarrinho(produto);
@@ -447,22 +417,16 @@ function atualizarTodosOsTotais() {
   const total = carrinhoAtual.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   const totalItensCount = carrinhoAtual.reduce((s, it) => s + it.quantidade, 0);
 
-  // Atualizar header
   if (totalItens) totalItens.textContent = `${totalItensCount} ${totalItensCount === 1 ? 'item' : 'itens'}`;
   if (totalVendaElement) totalVendaElement.textContent = `R$ ${total.toFixed(2)}`;
-
-  // Atualizar carrinho sidebar
   if (subtotalElement) subtotalElement.textContent = `R$ ${total.toFixed(2)}`;
   if (totalVendaDesktop) totalVendaDesktop.textContent = `R$ ${total.toFixed(2)}`;
-  
-  // Atualizar botão mobile
   if (carrinhoTotalMobile) carrinhoTotalMobile.textContent = `R$ ${total.toFixed(2)}`;
   if (carrinhoBadge) {
     carrinhoBadge.textContent = totalItensCount;
     carrinhoBadge.style.display = totalItensCount > 0 ? 'flex' : 'none';
   }
 
-  // Se o modal de finalização estiver aberto, atualizar também
   if (modalFinalizar && modalFinalizar.style.display === 'flex') {
     if (totalModal) totalModal.textContent = `R$ ${total.toFixed(2)}`;
     if (valorPagamentoFinal) {
@@ -472,7 +436,7 @@ function atualizarTodosOsTotais() {
   }
 }
 
-// Modal de finalização (abre e popula resumo)
+// Modal de finalização
 function abrirModalFinalizacao() {
   if (!resumoItens || !totalModal || !modalFinalizar) {
     console.warn('Elementos do modal de finalização não encontrados');
@@ -488,11 +452,9 @@ function abrirModalFinalizacao() {
   });
   const total = carrinhoAtual.reduce((s, it) => s + (it.preco * it.quantidade), 0);
   
-  // ATUALIZADO: Garantir que todos os totais sejam atualizados
   if (totalModal) totalModal.textContent = `R$ ${total.toFixed(2)}`;
   if (valorPagamentoFinal) valorPagamentoFinal.textContent = `R$ ${total.toFixed(2)}`;
   
-  // sincroniza com select desktop (se existir)
   const selectDesktop = document.getElementById('formaPagamento');
   if (selectDesktop) formaPagamentoSelecionada = selectDesktop.value || formaPagamentoSelecionada;
   atualizarInstrucaoPagamento(total);
@@ -507,91 +469,112 @@ function atualizarInstrucaoPagamento(total) {
   if (instrucaoFinal) instrucaoFinal.classList.add('mostrar');
 }
 
-// LEITOR (HID) - sem teclado virtual
-function ativarLeitorSemTeclado() {
+// LEITOR OTIMIZADO PARA GERTECK SK210
+function ativarLeitorGerteck() {
   const scannerInput = scannerInputElement;
-  const campoBuscaVisivel = campoBuscaElement;
 
   if (!scannerInput) {
-    console.warn('scannerInput não encontrado. Adicione o input escondido no HTML.');
+    console.warn('scannerInput não encontrado.');
     return;
   }
 
+  // Foco permanente no input escondido
   function garantirFoco() {
-    try { scannerInput.focus({ preventScroll: true }); }
-    catch { scannerInput.focus(); }
+    try { 
+      scannerInput.focus({ preventScroll: true }); 
+    } catch { 
+      scannerInput.focus(); 
+    }
   }
+  
   garantirFoco();
 
+  // Verificar foco a cada 500ms
   const focoInterval = setInterval(() => {
-    if (document.activeElement !== scannerInput) garantirFoco();
-  }, 700);
+    if (document.activeElement !== scannerInput) {
+      garantirFoco();
+    }
+  }, 500);
 
   let buffer = '';
   let ultimoTempo = 0;
 
-  async function processarBuffer(termoRaw) {
-    const termo = (termoRaw || '').trim();
-    if (!termo) return;
-    if (campoBuscaVisivel) campoBuscaVisivel.value = termo;
-    const produtoEncontrado = produtosModule.encontrarProdutoPorTermo(termo);
+  async function processarCodigoBarras(codigo) {
+    const codigoLimpo = (codigo || '').trim();
+    if (!codigoLimpo) return;
+    
+    console.log('Código de barras lido:', codigoLimpo);
+    
+    // Buscar produto pelo código de barras
+    const produtoEncontrado = produtosModule.encontrarProdutoPorTermo(codigoLimpo);
+    
     if (produtoEncontrado) {
-      if (produtoEncontrado.quantidade > 0) carrinhoModule.adicionarAoCarrinho(produtoEncontrado);
-      else await mostrarAlerta('Produto sem estoque!');
+      if (produtoEncontrado.quantidade > 0) {
+        carrinhoModule.adicionarAoCarrinho(produtoEncontrado);
+        toast(`✅ ${produtoEncontrado.nome} adicionado`);
+      } else {
+        await mostrarAlerta('Produto sem estoque!');
+      }
     } else {
-      console.warn('Produto não encontrado:', termo);
+      console.warn('Produto não encontrado para código:', codigoLimpo);
       await mostrarAlerta('Produto não encontrado');
     }
+    
+    // Limpar buffer e input
     buffer = '';
     scannerInput.value = '';
+    
+    // Refocar após processamento
     setTimeout(() => garantirFoco(), 100);
   }
 
-  window.addEventListener('keydown', (e) => {
-    if (!e || typeof e.key !== 'string') return;
-    if (e.key.length > 1 && e.key !== 'Enter') return;
-    const agora = Date.now();
-    if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
-    ultimoTempo = agora;
-
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (buffer.length > 0) processarBuffer(buffer);
-      buffer = '';
-      return;
+  // Listener para capturar entrada do leitor
+  scannerInput.addEventListener('input', (e) => {
+    const valor = e.target.value;
+    
+    // Se o valor terminar com Enter (carriage return) ou tiver comprimento típico de código de barras
+    if (valor.includes('\r') || valor.includes('\n') || valor.length >= 8) {
+      const codigo = valor.replace(/[\r\n]/g, '').trim();
+      if (codigo.length > 0) {
+        processarCodigoBarras(codigo);
+      }
     }
+  });
 
-    if (e.key.length === 1) buffer += e.key;
-
-    if (scannerInput && typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
-    scannerInput._timeoutProcess = setTimeout(() => {
-      if (buffer.length > 0) processarBuffer(buffer);
-    }, 120);
-  }, true);
-
+  // Fallback para keydown (caso o input event não funcione)
   scannerInput.addEventListener('keydown', (e) => {
-    if (!e || typeof e.key !== 'string') return;
-    const agora = Date.now();
-    if (ultimoTempo && (agora - ultimoTempo) > 200) buffer = '';
-    ultimoTempo = agora;
-
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (buffer.length > 0) processarBuffer(buffer);
-      buffer = '';
-      return;
+      if (scannerInput.value.trim().length > 0) {
+        processarCodigoBarras(scannerInput.value);
+      }
     }
+  });
 
-    if (e.key.length === 1) buffer += e.key;
+  // Prevenir qualquer abertura de teclado
+  scannerInput.addEventListener('focus', (e) => {
+    e.preventDefault();
+  });
 
-    if (typeof scannerInput._timeoutProcess !== 'undefined') clearTimeout(scannerInput._timeoutProcess);
-    scannerInput._timeoutProcess = setTimeout(() => {
-      if (buffer.length > 0) processarBuffer(buffer);
-    }, 120);
+  scannerInput.addEventListener('click', (e) => {
+    e.preventDefault();
+  });
+
+  // Garantir que o teclado nunca abra
+  document.addEventListener('touchstart', (e) => {
+    if (e.target === scannerInput) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener('mousedown', (e) => {
+    if (e.target === scannerInput) {
+      e.preventDefault();
+    }
   });
 }
 
-// Carrinho mobile (inicialização + abrir/fechar) usando funções do módulo carrinho
+// Carrinho mobile
 function inicializarCarrinhoMobile() {
   if (!btnAbrirCarrinho || !modalCarrinho) return;
 
@@ -611,12 +594,11 @@ function inicializarCarrinhoMobile() {
     abrirModalFinalizacaoFn: abrirModalFinalizacao
   });
 
-  // registrar funções globais usadas por botões inline
   window.alterarQuantidade = carrinhoModule.alterarQuantidade;
   window.removerDoCarrinho = carrinhoModule.removerDoCarrinho;
 }
 
-// Helpers UI (toast)
+// Toast
 function toast(msg, timeout = 2500) {
   let t = document.createElement('div');
   t.className = 'caixa-toast';
@@ -642,15 +624,18 @@ function toast(msg, timeout = 2500) {
   setTimeout(() => { try { t.remove(); } catch (e) {} }, timeout);
 }
 
-// Expondo utilitários para módulos que precisam
 export { toast, atualizarTodosOsTotais };
 
-// Inicialização final quando DOM pronto
+// Inicialização final
 document.addEventListener('DOMContentLoaded', () => {
   inicializarElementosDOM();
   tryEnterFullscreen();
   startFullscreenWatcher();
 
-  if (scannerInputElement) ativarLeitorSemTeclado();
-  window.filtrarProdutos = produtosModule.filtrarProdutos;
+  // Ativar leitor otimizado para Gerteck
+  if (scannerInputElement) {
+    setTimeout(() => {
+      ativarLeitorGerteck();
+    }, 1000);
+  }
 });
