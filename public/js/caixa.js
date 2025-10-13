@@ -1,4 +1,4 @@
-// caixa.js - principal (otimizado para Gerteck SK210 - sem teclado)
+// caixa.js - principal (BLOQUEIO TOTAL DE TECLADO VIRTUAL)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -115,7 +115,7 @@ export async function mostrarAlerta(mensagem) {
 
 export { mostrarConfirmacao as confirmDialog, mostrarAlerta as alertDialog };
 
-// Fullscreen persistence (mantido)
+// Fullscreen persistence
 let _fullscreenRetryInterval = null;
 let _fullscreenRetryCount = 0;
 const FULLSCREEN_RETRY_MAX = 6;
@@ -171,6 +171,56 @@ document.addEventListener('fullscreenchange', () => {
 
 startFullscreenWatcher();
 
+// BLOQUEIO GLOBAL DE TECLADO VIRTUAL
+function bloquearTecladoGlobalmente() {
+  // Prevenir focus em qualquer elemento que possa abrir teclado
+  document.addEventListener('touchstart', function(e) {
+    const tagName = e.target.tagName.toLowerCase();
+    const type = e.target.type;
+    
+    // Bloquear teclado para todos os inputs exceto o scanner
+    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+      e.preventDefault();
+      e.target.blur();
+    }
+    
+    // Bloquear para textareas e contenteditables
+    if (tagName === 'textarea' || e.target.isContentEditable) {
+      e.preventDefault();
+      e.target.blur();
+    }
+  }, { passive: false });
+
+  // Prevenir focus em elementos input
+  document.addEventListener('mousedown', function(e) {
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  }, { passive: false });
+
+  // Bloquear eventos de focus
+  document.addEventListener('focusin', function(e) {
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+      e.preventDefault();
+      e.target.blur();
+    }
+  }, true);
+
+  // Prevenir abertura de teclado via JavaScript
+  const originalFocus = HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus = function() {
+    if (this.tagName.toLowerCase() === 'input' && this.id !== 'scannerInput') {
+      return;
+    }
+    originalFocus.apply(this, arguments);
+  };
+
+  console.log('🔒 Teclado virtual bloqueado globalmente');
+}
+
 // Inicialização do DOM
 function inicializarElementosDOM() {
   modalLogin = document.getElementById('modalLogin');
@@ -203,7 +253,7 @@ function inicializarElementosDOM() {
   btnFinalizarVenda = document.getElementById('btnFinalizarVenda');
   btnCancelarVenda = document.getElementById('btnCancelarVenda');
 
-  // scanner escondido (OTIMIZADO PARA GERTECK)
+  // scanner escondido
   scannerInputElement = document.getElementById('scannerInput');
 
   // carrinho mobile
@@ -218,6 +268,24 @@ function inicializarElementosDOM() {
   totalVendaModal = document.getElementById('totalVendaModal');
   btnFinalizarVendaMobile = document.getElementById('btnFinalizarVendaMobile');
   btnCancelarVendaMobile = document.getElementById('btnCancelarVendaMobile');
+
+  // Aplicar bloqueio de teclado aos inputs do login
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  
+  if (loginEmail) {
+    loginEmail.addEventListener('focus', (e) => {
+      e.preventDefault();
+      // Permitir focus apenas durante o login
+    });
+  }
+  
+  if (loginPassword) {
+    loginPassword.addEventListener('focus', (e) => {
+      e.preventDefault();
+      // Permitir focus apenas durante o login
+    });
+  }
 
   configurarEventListeners();
   inicializarCarrinhoMobile();
@@ -336,7 +404,7 @@ function configurarEventListeners() {
   });
 }
 
-// Auth state (mantido)
+// Auth state
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     try {
@@ -469,7 +537,7 @@ function atualizarInstrucaoPagamento(total) {
   if (instrucaoFinal) instrucaoFinal.classList.add('mostrar');
 }
 
-// LEITOR OTIMIZADO PARA GERTECK SK210
+// LEITOR OTIMIZADO - BLOQUEIO TOTAL DE TECLADO
 function ativarLeitorGerteck() {
   const scannerInput = scannerInputElement;
 
@@ -551,7 +619,7 @@ function ativarLeitorGerteck() {
     }
   });
 
-  // Prevenir qualquer abertura de teclado
+  // BLOQUEIO TOTAL - Prevenir qualquer abertura de teclado
   scannerInput.addEventListener('focus', (e) => {
     e.preventDefault();
   });
@@ -560,18 +628,30 @@ function ativarLeitorGerteck() {
     e.preventDefault();
   });
 
-  // Garantir que o teclado nunca abra
+  scannerInput.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+
+  scannerInput.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+  });
+
+  // Garantir que o teclado nunca abra em nenhum elemento
   document.addEventListener('touchstart', (e) => {
-    if (e.target === scannerInput) {
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
       e.preventDefault();
+      e.target.blur();
     }
   }, { passive: false });
 
   document.addEventListener('mousedown', (e) => {
-    if (e.target === scannerInput) {
+    const tagName = e.target.tagName.toLowerCase();
+    if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
       e.preventDefault();
+      e.target.blur();
     }
-  });
+  }, { passive: false });
 }
 
 // Carrinho mobile
@@ -632,10 +712,15 @@ document.addEventListener('DOMContentLoaded', () => {
   tryEnterFullscreen();
   startFullscreenWatcher();
 
+  // Ativar bloqueio global de teclado
+  setTimeout(() => {
+    bloquearTecladoGlobalmente();
+  }, 1000);
+
   // Ativar leitor otimizado para Gerteck
   if (scannerInputElement) {
     setTimeout(() => {
       ativarLeitorGerteck();
-    }, 1000);
+    }, 1500);
   }
 });
