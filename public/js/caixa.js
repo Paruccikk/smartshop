@@ -1,4 +1,4 @@
-// caixa.js - principal (BLOQUEIO TOTAL DE TECLADO VIRTUAL)
+// caixa.js - principal (BLOQUEIO DE TECLADO - EXCETO NO LOGIN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -171,54 +171,64 @@ document.addEventListener('fullscreenchange', () => {
 
 startFullscreenWatcher();
 
-// BLOQUEIO GLOBAL DE TECLADO VIRTUAL
+// BLOQUEIO GLOBAL DE TECLADO VIRTUAL - EXCETO NO LOGIN
 function bloquearTecladoGlobalmente() {
-  // Prevenir focus em qualquer elemento que possa abrir teclado
+  // Prevenir focus em qualquer elemento que possa abrir teclado, exceto no login
   document.addEventListener('touchstart', function(e) {
     const tagName = e.target.tagName.toLowerCase();
-    const type = e.target.type;
+    const hasLoginClass = e.target.classList.contains('login-input');
+    const isLoginModal = e.target.closest('#modalLogin');
     
-    // Bloquear teclado para todos os inputs exceto o scanner
-    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+    // Permitir apenas inputs do login
+    if ((tagName === 'input' || tagName === 'textarea') && !hasLoginClass && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
     
-    // Bloquear para textareas e contenteditables
-    if (tagName === 'textarea' || e.target.isContentEditable) {
+    // Bloquear para textareas e contenteditables fora do login
+    if ((tagName === 'textarea' || e.target.isContentEditable) && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
   }, { passive: false });
 
-  // Prevenir focus em elementos input
+  // Prevenir focus em elementos input (exceto login)
   document.addEventListener('mousedown', function(e) {
     const tagName = e.target.tagName.toLowerCase();
-    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+    const hasLoginClass = e.target.classList.contains('login-input');
+    const isLoginModal = e.target.closest('#modalLogin');
+    
+    if ((tagName === 'input' || tagName === 'textarea') && !hasLoginClass && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
   }, { passive: false });
 
-  // Bloquear eventos de focus
+  // Bloquear eventos de focus (exceto login)
   document.addEventListener('focusin', function(e) {
     const tagName = e.target.tagName.toLowerCase();
-    if (tagName === 'input' && e.target.id !== 'scannerInput') {
+    const hasLoginClass = e.target.classList.contains('login-input');
+    const isLoginModal = e.target.closest('#modalLogin');
+    
+    if ((tagName === 'input' || tagName === 'textarea') && !hasLoginClass && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
   }, true);
 
-  // Prevenir abertura de teclado via JavaScript
+  // Prevenir abertura de teclado via JavaScript (exceto login)
   const originalFocus = HTMLElement.prototype.focus;
   HTMLElement.prototype.focus = function() {
-    if (this.tagName.toLowerCase() === 'input' && this.id !== 'scannerInput') {
-      return;
+    const isLoginInput = this.classList.contains('login-input');
+    const isInLoginModal = this.closest('#modalLogin');
+    
+    if ((this.tagName.toLowerCase() === 'input' || this.tagName.toLowerCase() === 'textarea') && !isLoginInput && !isInLoginModal) {
+      return; // Bloquear focus
     }
     originalFocus.apply(this, arguments);
   };
 
-  console.log('🔒 Teclado virtual bloqueado globalmente');
+  console.log('🔒 Teclado virtual bloqueado globalmente (exceto login)');
 }
 
 // Inicialização do DOM
@@ -268,24 +278,6 @@ function inicializarElementosDOM() {
   totalVendaModal = document.getElementById('totalVendaModal');
   btnFinalizarVendaMobile = document.getElementById('btnFinalizarVendaMobile');
   btnCancelarVendaMobile = document.getElementById('btnCancelarVendaMobile');
-
-  // Aplicar bloqueio de teclado aos inputs do login
-  const loginEmail = document.getElementById('loginEmail');
-  const loginPassword = document.getElementById('loginPassword');
-  
-  if (loginEmail) {
-    loginEmail.addEventListener('focus', (e) => {
-      e.preventDefault();
-      // Permitir focus apenas durante o login
-    });
-  }
-  
-  if (loginPassword) {
-    loginPassword.addEventListener('focus', (e) => {
-      e.preventDefault();
-      // Permitir focus apenas durante o login
-    });
-  }
 
   configurarEventListeners();
   inicializarCarrinhoMobile();
@@ -454,8 +446,13 @@ function mostrarLogin() {
 function mostrarCaixa() {
   if (modalLogin) modalLogin.style.display = 'none';
   if (caixaContent) caixaContent.style.display = 'flex';
-  if (lojaNome) lojaNome.textContent = usuarioLogado.lojaNome || 'Minha Loja';
-  if (userName) userName.textContent = usuarioLogado.nome || usuarioLogado.email;
+  
+  // ATUALIZADO: Agora temos dois elementos separados
+  const lojaNomeElement = document.getElementById('lojaNome');
+  const userNameElement = document.getElementById('userName');
+  
+  if (lojaNomeElement) lojaNomeElement.textContent = usuarioLogado.lojaNome || 'Minha Loja';
+  if (userNameElement) userNameElement.textContent = usuarioLogado.nome || usuarioLogado.email;
 
   produtosModule.carregarProdutos().then(() => {
     produtosModule.configurarRealtimeUpdates();
@@ -537,7 +534,7 @@ function atualizarInstrucaoPagamento(total) {
   if (instrucaoFinal) instrucaoFinal.classList.add('mostrar');
 }
 
-// LEITOR OTIMIZADO - BLOQUEIO TOTAL DE TECLADO
+// LEITOR OTIMIZADO - BLOQUEIO TOTAL DE TECLADO (EXCETO LOGIN)
 function ativarLeitorGerteck() {
   const scannerInput = scannerInputElement;
 
@@ -619,7 +616,7 @@ function ativarLeitorGerteck() {
     }
   });
 
-  // BLOQUEIO TOTAL - Prevenir qualquer abertura de teclado
+  // BLOQUEIO TOTAL - Prevenir qualquer abertura de teclado (exceto login)
   scannerInput.addEventListener('focus', (e) => {
     e.preventDefault();
   });
@@ -636,10 +633,13 @@ function ativarLeitorGerteck() {
     e.preventDefault();
   });
 
-  // Garantir que o teclado nunca abra em nenhum elemento
+  // Garantir que o teclado nunca abra em nenhum elemento (exceto login)
   document.addEventListener('touchstart', (e) => {
     const tagName = e.target.tagName.toLowerCase();
-    if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
+    const hasLoginClass = e.target.classList.contains('login-input');
+    const isLoginModal = e.target.closest('#modalLogin');
+    
+    if ((tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) && !hasLoginClass && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
@@ -647,7 +647,10 @@ function ativarLeitorGerteck() {
 
   document.addEventListener('mousedown', (e) => {
     const tagName = e.target.tagName.toLowerCase();
-    if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
+    const hasLoginClass = e.target.classList.contains('login-input');
+    const isLoginModal = e.target.closest('#modalLogin');
+    
+    if ((tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) && !hasLoginClass && !isLoginModal) {
       e.preventDefault();
       e.target.blur();
     }
@@ -712,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
   tryEnterFullscreen();
   startFullscreenWatcher();
 
-  // Ativar bloqueio global de teclado
+  // Ativar bloqueio global de teclado (exceto login)
   setTimeout(() => {
     bloquearTecladoGlobalmente();
   }, 1000);
