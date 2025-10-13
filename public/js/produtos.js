@@ -83,10 +83,16 @@ export async function mostrarCategorias() {
     return;
   }
 
-  const container = document.createElement('div');
-  container.className = 'categorias-grid';
-  categorias.forEach(cat => container.appendChild(criarCartaoCategoria(cat)));
-  produtosGridEl.appendChild(container);
+  // Container com scroll
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'categorias-container';
+  
+  const grid = document.createElement('div');
+  grid.className = 'categorias-grid';
+  categorias.forEach(cat => grid.appendChild(criarCartaoCategoria(cat)));
+  
+  scrollContainer.appendChild(grid);
+  produtosGridEl.appendChild(scrollContainer);
 }
 
 /* ------------------ RENDER: PRODUTOS ------------------ */
