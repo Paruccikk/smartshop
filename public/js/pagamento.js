@@ -1,5 +1,4 @@
 // pagamento.js - integração com PayGo (Android WebView) ou endpoint Node.js (modo web)
-
 import { push, set, get, update, ref } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 /**
@@ -27,7 +26,7 @@ export async function confirmarVenda({
   atualizarCarrinhoFn = () => {}
 }) {
   try {
-    // === NOVO: Detecta se está rodando dentro do app Android ===
+    // === Detecta se está rodando dentro do app Android com a bridge PDV ===
     const isAndroidApp = typeof window !== "undefined" && window.PDV && typeof window.PDV.pagar === "function";
 
     // Função auxiliar para registrar venda e atualizar estoque
@@ -62,9 +61,19 @@ export async function confirmarVenda({
       if (typeof carregarProdutos === 'function') await carregarProdutos();
     };
 
+    // Função default de log vindo do Android
+    if (!window.onLogPayGo) {
+      window.onLogPayGo = (msg) => {
+        console.log('PayGoLog:', msg);
+        // opcional: mostra no UI
+        // showToast(msg);
+      };
+    }
+
     // === MODO 1: Rodando dentro do aplicativo Android com PayGo ===
     if (isAndroidApp) {
       console.log("Usando PayGo Integrado (Android)");
+      window.onLogPayGo('Inicializando pagamento via WebView (PayGo)');
 
       return new Promise((resolve) => {
         const valorCentavos = Math.round(total * 100).toString();
@@ -72,15 +81,18 @@ export async function confirmarVenda({
         // Define callbacks globais que o Android chamará
         window.onPagamentoConcluido = async (retorno) => {
           try {
+            // retorno é uma string JSON (conforme MainActivity envia)
             const parsed = JSON.parse(retorno || "{}");
             await registrarVenda({
               status: 'aprovado',
               autorizacao: parsed.autorizacao,
               nsu: parsed.nsu
             });
+            window.onLogPayGo('Pagamento aprovado. Autorização: ' + (parsed.autorizacao || 'N/A'));
             resolve({ ok: true, resultado: parsed });
           } catch (e) {
             console.error("Erro ao processar retorno PayGo:", e);
+            window.onLogPayGo('Erro ao processar retorno PayGo: ' + e.message);
             toast("Erro ao processar retorno da maquininha.");
             resolve({ ok: false, error: e });
           }
@@ -88,14 +100,17 @@ export async function confirmarVenda({
 
         window.onPagamentoFalhou = () => {
           toast("Pagamento cancelado ou não autorizado.");
+          window.onLogPayGo('Pagamento cancelado ou falhou');
           resolve({ ok: false, resultado: { status: "falhou" } });
         };
 
         // Chama o método Android exposto via JavaScriptInterface
         try {
+          window.onLogPayGo('Chamando bridge PDV.pagar com valor (centavos): ' + valorCentavos);
           window.PDV.pagar(valorCentavos);
         } catch (err) {
           console.error("Erro ao chamar PayGo:", err);
+          window.onLogPayGo('Erro ao chamar PayGo: ' + (err.message || err));
           toast("Erro na integração PayGo. Verifique a maquininha.");
           resolve({ ok: false, error: err });
         }
@@ -122,6 +137,7 @@ export async function confirmarVenda({
     }
   } catch (err) {
     console.error('Erro ao processar pagamento:', err);
+    if (window.onLogPayGo) window.onLogPayGo('Erro confirmarVenda: ' + (err.message || err));
     toast('Erro ao processar pagamento. Verifique a maquininha.');
     return { ok: false, error: err };
   }
