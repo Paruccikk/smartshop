@@ -1,19 +1,5 @@
-// pagamento.js - integração com PayGo (Android WebView) ou endpoint Node.js (modo web)
 import { push, set, get, update, ref } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/**
- * confirmarVenda(params)
- * params:
- *  - carrinho: array de items
- *  - total: number
- *  - formaPagamento: string
- *  - usuarioLogado: object {nome, uid}
- *  - lojaId: string
- *  - db: firebase database instance
- *  - carregarProdutos: função (opcional)
- *  - toast: função (opcional)
- *  - atualizarCarrinhoFn: função (opcional)
- */
 export async function confirmarVenda({
   carrinho,
   total,
@@ -26,17 +12,15 @@ export async function confirmarVenda({
   atualizarCarrinhoFn = () => {}
 }) {
   try {
-    // === Detecta se está rodando dentro do app Android com a bridge PDV ===
     const isAndroidApp = typeof window !== "undefined" && window.PDV && typeof window.PDV.pagar === "function";
 
-    // Função auxiliar para registrar venda e atualizar estoque
     const registrarVenda = async (resultado) => {
       const vendaData = {
         data: new Date().toISOString(),
         itens: carrinho,
         total,
         formaPagamento,
-        status: 'concluída',
+        status: resultado.status || 'concluída',
         vendedor: usuarioLogado?.nome || usuarioLogado?.email,
         vendedorId: usuarioLogado?.uid,
         autorizacao: resultado?.autorizacao || null,
@@ -45,81 +29,52 @@ export async function confirmarVenda({
       const novaVendaRef = push(ref(db, `lojas/${lojaId}/vendas`));
       await set(novaVendaRef, vendaData);
 
-      // Atualizar estoque
       for (const item of carrinho) {
         const produtoRef = ref(db, `lojas/${lojaId}/produtos/${item.id}`);
-        const produtoSnap = await get(produtoRef);
-        if (produtoSnap.exists()) {
-          const produto = produtoSnap.val();
-          const novaQuantidade = (produto.quantidade || 0) - item.quantidade;
-          await update(produtoRef, { quantidade: Math.max(0, novaQuantidade) });
+        const snap = await get(produtoRef);
+        if (snap.exists()) {
+          const produto = snap.val();
+          const novaQtd = (produto.quantidade || 0) - item.quantidade;
+          await update(produtoRef, { quantidade: Math.max(0, novaQtd) });
         }
       }
 
-      toast('Pagamento aprovado! Venda concluída com sucesso!');
+      toast('Pagamento aprovado! Venda concluída!');
       atualizarCarrinhoFn();
       if (typeof carregarProdutos === 'function') await carregarProdutos();
     };
 
-    // Função default de log vindo do Android
-    if (!window.onLogPayGo) {
-      window.onLogPayGo = (msg) => {
-        console.log('PayGoLog:', msg);
-        // opcional: mostra no UI
-        // showToast(msg);
-      };
-    }
-
-    // === MODO 1: Rodando dentro do aplicativo Android com PayGo ===
     if (isAndroidApp) {
-      console.log("Usando PayGo Integrado (Android)");
-      window.onLogPayGo('Inicializando pagamento via WebView (PayGo)');
+      console.log("Usando PayGo SDK via WebView");
 
       return new Promise((resolve) => {
         const valorCentavos = Math.round(total * 100).toString();
 
-        // Define callbacks globais que o Android chamará
-        window.onPagamentoConcluido = async (retorno) => {
+        window.onPagamentoConcluido = async (json) => {
           try {
-            // retorno é uma string JSON (conforme MainActivity envia)
-            const parsed = JSON.parse(retorno || "{}");
-            await registrarVenda({
-              status: 'aprovado',
-              autorizacao: parsed.autorizacao,
-              nsu: parsed.nsu
-            });
-            window.onLogPayGo('Pagamento aprovado. Autorização: ' + (parsed.autorizacao || 'N/A'));
+            const parsed = JSON.parse(json);
+            await registrarVenda(parsed);
             resolve({ ok: true, resultado: parsed });
-          } catch (e) {
-            console.error("Erro ao processar retorno PayGo:", e);
-            window.onLogPayGo('Erro ao processar retorno PayGo: ' + e.message);
-            toast("Erro ao processar retorno da maquininha.");
-            resolve({ ok: false, error: e });
+          } catch (err) {
+            toast("Erro ao processar retorno do pagamento");
+            resolve({ ok: false, error: err });
           }
         };
 
         window.onPagamentoFalhou = () => {
           toast("Pagamento cancelado ou não autorizado.");
-          window.onLogPayGo('Pagamento cancelado ou falhou');
-          resolve({ ok: false, resultado: { status: "falhou" } });
+          resolve({ ok: false });
         };
 
-        // Chama o método Android exposto via JavaScriptInterface
         try {
-          window.onLogPayGo('Chamando bridge PDV.pagar com valor (centavos): ' + valorCentavos);
           window.PDV.pagar(valorCentavos);
         } catch (err) {
-          console.error("Erro ao chamar PayGo:", err);
-          window.onLogPayGo('Erro ao chamar PayGo: ' + (err.message || err));
-          toast("Erro na integração PayGo. Verifique a maquininha.");
+          toast("Falha ao iniciar pagamento. Verifique a maquininha.");
           resolve({ ok: false, error: err });
         }
       });
-    }
-
-    // === MODO 2: Rodando no navegador comum (usa o endpoint Node.js) ===
-    else {
-      console.log("Usando API /api/pinpad/pagar (modo web)");
+    } else {
+      // fallback modo web
       const response = await fetch('/api/pinpad/pagar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,9 +91,8 @@ export async function confirmarVenda({
       }
     }
   } catch (err) {
-    console.error('Erro ao processar pagamento:', err);
-    if (window.onLogPayGo) window.onLogPayGo('Erro confirmarVenda: ' + (err.message || err));
-    toast('Erro ao processar pagamento. Verifique a maquininha.');
+    toast('Erro ao processar pagamento.');
+    console.error(err);
     return { ok: false, error: err };
   }
 }
